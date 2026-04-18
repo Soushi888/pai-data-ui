@@ -50,6 +50,23 @@ export function entityId(filePath: string): string {
   return filePath.split("/").pop()!.replace(/\.md$/, "");
 }
 
+export function readRaw(filePath: string): Effect.Effect<string, ParseError> {
+  return Effect.tryPromise({
+    try: () => readFile(filePath, "utf8"),
+    catch: (e) => new ParseError({ file: filePath, cause: e }),
+  });
+}
+
+export function writeRaw(
+  filePath: string,
+  content: string,
+): Effect.Effect<void, WriteError> {
+  return Effect.tryPromise({
+    try: () => writeFile(filePath, content, "utf8"),
+    catch: (e) => new WriteError({ file: filePath, cause: e }),
+  });
+}
+
 export function requireEntity<T>(
   filePath: string,
   id: string,

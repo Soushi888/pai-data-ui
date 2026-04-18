@@ -86,7 +86,8 @@
     <h1 class="text-xl font-semibold text-gray-100">{data.project.title}</h1>
     <StatusBadge status={data.project.status} />
     <StatusBadge status={data.project.project_type} />
-    <div class="ml-auto">
+    <div class="ml-auto flex gap-2">
+      <a href="/pm/projects/{data.project.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
       <button
         onclick={() => (editing = !editing)}
         class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"

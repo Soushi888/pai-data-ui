@@ -95,5 +95,6 @@
         View PDF
       </a>
     {/if}
+    <a href="/erp/invoices/{data.invoice.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
   </div>
 </div>

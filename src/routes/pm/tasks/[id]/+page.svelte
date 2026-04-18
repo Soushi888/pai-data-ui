@@ -71,7 +71,8 @@
     <span class="text-gray-600">/</span>
     <StatusBadge status={data.task.status} />
     <StatusBadge status={data.task.priority} />
-    <div class="ml-auto">
+    <div class="ml-auto flex gap-2">
+      <a href="/pm/tasks/{data.task.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
       <button
         onclick={() => (editing = !editing)}
         class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"

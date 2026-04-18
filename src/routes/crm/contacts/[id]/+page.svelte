@@ -54,7 +54,8 @@
     <a href="/crm" class="text-gray-500 hover:text-gray-300 text-sm">← Contacts</a>
     <h1 class="text-xl font-semibold text-gray-100">{data.contact.name}</h1>
     <StatusBadge status={data.contact.status} />
-    <div class="ml-auto">
+    <div class="ml-auto flex gap-2">
+      <a href="/crm/contacts/{data.contact.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
       <button
         onclick={() => (editing = !editing)}
         class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"

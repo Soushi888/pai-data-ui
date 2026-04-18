@@ -4,7 +4,7 @@
 
   let { data } = $props()
 
-  let statusFilter = $state('all')
+  let statusFilter = $state('active')
 
   const filtered = $derived(
     statusFilter === 'all'

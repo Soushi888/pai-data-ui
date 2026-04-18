@@ -4,7 +4,7 @@
 
   let { data } = $props()
 
-  let statusFilter = $state('all')
+  let statusFilter = $state('active')
   let selectedTags = $state<string[]>([])
   let search = $state('')
 

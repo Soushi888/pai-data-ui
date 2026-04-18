@@ -1,14 +1,17 @@
 <script lang="ts">
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
+  import TagList from '$lib/components/shared/TagList.svelte'
+  import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
   import { invalidateAll } from '$app/navigation'
 
   let { data } = $props()
 
+  let editing = $state(false)
   let title = $state(data.project.title)
   let project_type = $state(data.project.project_type)
   let status = $state(data.project.status)
   let organization = $state(data.project.organization ?? '')
-  let tags = $state((data.project.tags ?? []).join(', '))
+  let tags = $state<string[]>(data.project.tags ?? [])
   let body = $state(data.body)
   let saving = $state(false)
   let saved = $state(false)
@@ -16,6 +19,12 @@
   let newTaskTitle = $state('')
   let newTaskPriority = $state('medium')
   let addingTask = $state(false)
+
+  const inputClass = () =>
+    `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default'}`
+
+  const selectClass = () =>
+    `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default appearance-none'}`
 
   async function save() {
     saving = true
@@ -25,12 +34,23 @@
       body: JSON.stringify({
         title, project_type, status,
         organization: organization || undefined,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags
       })
     })
     saving = false
     saved = true
     setTimeout(() => (saved = false), 2000)
+  }
+
+  async function archive() {
+    saving = true
+    await fetch(`/api/projects/${data.project.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'archived' })
+    })
+    status = 'archived'
+    saving = false
   }
 
   async function addTask(e: Event) {
@@ -66,6 +86,12 @@
     <h1 class="text-xl font-semibold text-gray-100">{data.project.title}</h1>
     <StatusBadge status={data.project.status} />
     <StatusBadge status={data.project.project_type} />
+    <div class="ml-auto">
+      <button
+        onclick={() => (editing = !editing)}
+        class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
+      >{editing ? 'Done editing' : 'Edit'}</button>
+    </div>
   </div>
 
   <div class="grid grid-cols-3 gap-6 mb-8">
@@ -73,21 +99,21 @@
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="text-xs text-gray-500 block mb-1">Title</label>
-          <input bind:value={title} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+          <input bind:value={title} readonly={!editing} class={inputClass()} />
         </div>
         <div>
           <label class="text-xs text-gray-500 block mb-1">Organization</label>
-          <input bind:value={organization} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+          <input bind:value={organization} readonly={!editing} class={inputClass()} />
         </div>
         <div>
           <label class="text-xs text-gray-500 block mb-1">Type</label>
-          <select bind:value={project_type} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full">
+          <select bind:value={project_type} disabled={!editing} class={selectClass()}>
             <option value="client">client</option><option value="ovn">ovn</option><option value="r&d">r&d</option>
           </select>
         </div>
         <div>
           <label class="text-xs text-gray-500 block mb-1">Status</label>
-          <select bind:value={status} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full">
+          <select bind:value={status} disabled={!editing} class={selectClass()}>
             <option>active</option><option>on-hold</option><option>completed</option><option>archived</option>
           </select>
         </div>
@@ -110,11 +136,24 @@
       {/if}
       <div>
         <label class="text-xs text-gray-500 block mb-1">Tags</label>
-        <input bind:value={tags} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+        {#if editing}
+          <ChipsInput bind:tags />
+        {:else}
+          <TagList {tags} />
+        {/if}
       </div>
-      <button onclick={save} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-        {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
-      </button>
+      {#if editing}
+        <div class="flex gap-2">
+          <button onclick={save} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+            {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
+          </button>
+          {#if status !== 'archived'}
+            <button onclick={archive} disabled={saving} class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+              Archive
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
 
     <div>

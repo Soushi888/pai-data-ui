@@ -3,6 +3,17 @@
 
   let { data } = $props()
 
+  type FilterTab = 'active' | 'all' | 'archived'
+  let activeTab = $state<FilterTab>('active')
+
+  const visibleProjects = $derived(
+    activeTab === 'all'
+      ? data.projects
+      : activeTab === 'archived'
+        ? data.projects.filter((p) => p.status === 'archived')
+        : data.projects.filter((p) => p.status !== 'archived')
+  )
+
   const priorityDot: Record<string, string> = {
     critical: 'bg-red-500',
     high: 'bg-orange-400',
@@ -19,13 +30,27 @@
 </script>
 
 <div class="p-6 max-w-4xl">
-  <h1 class="text-xl font-semibold text-gray-100 mb-6">Active Projects</h1>
+  <h1 class="text-xl font-semibold text-gray-100 mb-4">Projects</h1>
 
-  {#if data.projects.length === 0}
-    <p class="text-gray-500 text-sm">No active projects. <a href="/pm/projects/new" class="text-blue-400 hover:text-blue-300">Create one</a>.</p>
+  <div class="flex gap-1 mb-6">
+    {#each (['active', 'all', 'archived'] as const) as tab}
+      <button
+        onclick={() => (activeTab = tab)}
+        class="px-3 py-1 text-xs rounded transition-colors
+          {activeTab === tab
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}"
+      >
+        {tab === 'active' ? 'Active' : tab === 'all' ? 'All' : 'Archived'}
+      </button>
+    {/each}
+  </div>
+
+  {#if visibleProjects.length === 0}
+    <p class="text-gray-500 text-sm">No {activeTab === 'archived' ? 'archived' : activeTab === 'all' ? '' : 'active'} projects. {#if activeTab === 'active'}<a href="/pm/projects/new" class="text-blue-400 hover:text-blue-300">Create one</a>.{/if}</p>
   {/if}
 
-  {#each data.projects as project}
+  {#each visibleProjects as project}
     {@const tasks = data.tasksByProject[project.id] ?? []}
     {@const inProgress = tasks.filter((t) => t.status === 'in-progress')}
     {@const todo = tasks.filter((t) => t.status === 'todo')}
@@ -37,6 +62,7 @@
           {project.title}
         </a>
         <div class="flex items-center gap-2">
+          <StatusBadge status={project.status} />
           <StatusBadge status={project.project_type} />
           {#if hours > 0}
             <span class="text-xs text-gray-500">{hours}h this week</span>

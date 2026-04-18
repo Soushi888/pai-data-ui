@@ -1,15 +1,18 @@
 <script lang="ts">
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
+  import TagList from '$lib/components/shared/TagList.svelte'
+  import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
   import { invalidateAll } from '$app/navigation'
 
   let { data } = $props()
 
+  let editing = $state(false)
   let title = $state(data.task.title)
   let status = $state(data.task.status)
   let priority = $state(data.task.priority)
   let t_shirt_size = $state(data.task.t_shirt_size ?? '')
   let epic = $state(data.task.epic ?? '')
-  let tags = $state((data.task.tags ?? []).join(', '))
+  let tags = $state<string[]>(data.task.tags ?? [])
   let body = $state(data.body)
   let saving = $state(false)
   let saved = $state(false)
@@ -23,6 +26,12 @@
     (data.task.time_logs ?? []).reduce((s, l) => s + l.hours, 0)
   )
 
+  const inputClass = () =>
+    `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default'}`
+
+  const selectClass = () =>
+    `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default appearance-none'}`
+
   async function save() {
     saving = true
     await fetch(`/api/tasks/${data.task.id}`, {
@@ -32,7 +41,7 @@
         title, status, priority,
         t_shirt_size: t_shirt_size || undefined,
         epic: epic || undefined,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags
       })
     })
     saving = false
@@ -62,43 +71,51 @@
     <span class="text-gray-600">/</span>
     <StatusBadge status={data.task.status} />
     <StatusBadge status={data.task.priority} />
+    <div class="ml-auto">
+      <button
+        onclick={() => (editing = !editing)}
+        class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
+      >{editing ? 'Done editing' : 'Edit'}</button>
+    </div>
   </div>
 
   <div class="grid grid-cols-3 gap-6">
     <div class="col-span-2 space-y-4">
       <div>
         <label class="text-xs text-gray-500 block mb-1">Title</label>
-        <input bind:value={title} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+        <input bind:value={title} readonly={!editing} class={inputClass()} />
       </div>
       <div class="grid grid-cols-3 gap-4">
         <div>
           <label class="text-xs text-gray-500 block mb-1">Status</label>
-          <select bind:value={status} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full">
+          <select bind:value={status} disabled={!editing} class={selectClass()}>
             <option>todo</option><option>in-progress</option><option>done</option><option>blocked</option>
           </select>
         </div>
         <div>
           <label class="text-xs text-gray-500 block mb-1">Priority</label>
-          <select bind:value={priority} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full">
+          <select bind:value={priority} disabled={!editing} class={selectClass()}>
             <option>low</option><option>medium</option><option>high</option><option>critical</option>
           </select>
         </div>
         <div>
           <label class="text-xs text-gray-500 block mb-1">Size</label>
-          <select bind:value={t_shirt_size} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full">
+          <select bind:value={t_shirt_size} disabled={!editing} class={selectClass()}>
             <option value="">—</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option>
           </select>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="text-xs text-gray-500 block mb-1">Epic</label>
-          <input bind:value={epic} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 block mb-1">Tags</label>
-          <input bind:value={tags} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
-        </div>
+      <div>
+        <label class="text-xs text-gray-500 block mb-1">Epic</label>
+        <input bind:value={epic} readonly={!editing} class={inputClass()} />
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 block mb-1">Tags</label>
+        {#if editing}
+          <ChipsInput bind:tags />
+        {:else}
+          <TagList {tags} />
+        {/if}
       </div>
 
       {#if data.task.external_ref}
@@ -123,9 +140,11 @@
         </div>
       {/if}
 
-      <button onclick={save} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-        {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
-      </button>
+      {#if editing}
+        <button onclick={save} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+          {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
+        </button>
+      {/if}
     </div>
 
     <div>

@@ -26,6 +26,13 @@
     })
     const json = await res.json()
     if (json.project?.id) {
+      if (opportunity_ref) {
+        await fetch(`/api/opportunities/${opportunity_ref}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'archived' })
+        })
+      }
       goto(`/pm/projects/${json.project.id}`)
     }
     saving = false

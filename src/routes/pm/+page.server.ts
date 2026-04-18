@@ -17,7 +17,7 @@ export const load: PageServerLoad = async () => {
     Effect.runPromise(Effect.either(listTasks()))
   ])
 
-  const projects = projectsR._tag === 'Right' ? projectsR.right.filter((p) => p.status === 'active') : []
+  const projects = projectsR._tag === 'Right' ? projectsR.right : []
   const tasks = tasksR._tag === 'Right' ? tasksR.right : []
   const monday = getMonday()
 

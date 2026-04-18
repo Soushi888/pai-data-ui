@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { scaleBand, scaleLinear } from 'd3-scale'
-  import { max } from 'd3-array'
+  import { scaleBand, scaleLinear, max } from 'd3'
 
   let { data } = $props()
 

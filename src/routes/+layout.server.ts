@@ -20,10 +20,10 @@ export const load: LayoutServerLoad = async () => {
   return {
     counts: {
       contacts: contacts._tag === 'Right' ? contacts.right.length : 0,
-      opportunities: opps._tag === 'Right' ? opps.right.length : 0,
+      opportunities: opps._tag === 'Right' ? opps.right.filter((o) => o.status !== 'archived').length : 0,
       organizations: orgs._tag === 'Right' ? orgs.right.length : 0,
       invoices: invoices._tag === 'Right' ? invoices.right.length : 0,
-      projects: projects._tag === 'Right' ? projects.right.length : 0,
+      projects: projects._tag === 'Right' ? projects.right.filter((p) => p.status !== 'archived').length : 0,
       tasks: tasks._tag === 'Right' ? tasks.right.length : 0
     }
   }

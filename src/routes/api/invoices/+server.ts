@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit'
 import { Effect } from 'effect'
-import { listInvoices } from '$lib/data/invoices.js'
+import { createInvoice, listInvoices } from '$lib/data/invoices.js'
 import { errorResponse } from '$lib/server/response.js'
 import type { RequestHandler } from './$types'
 
@@ -19,4 +19,11 @@ export const GET: RequestHandler = async ({ url }) => {
 
   invoices.sort((a, b) => b.issue_date.localeCompare(a.issue_date))
   return json({ invoices, total: invoices.length })
+}
+
+export const POST: RequestHandler = async ({ request }) => {
+  const body = await request.json()
+  const result = await Effect.runPromise(Effect.either(createInvoice(body)))
+  if (result._tag === 'Left') return errorResponse(result.left)
+  return json({ invoice: result.right }, { status: 201 })
 }

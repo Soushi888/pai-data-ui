@@ -18,9 +18,12 @@
 <div class="p-6 max-w-5xl">
   <div class="flex items-center justify-between mb-4">
     <h1 class="text-xl font-semibold text-gray-100">Invoices</h1>
-    {#if data.outstanding > 0}
-      <span class="text-sm text-orange-400">Outstanding: {cad(data.outstanding)}</span>
-    {/if}
+    <div class="flex items-center gap-3">
+      {#if data.outstanding > 0}
+        <span class="text-sm text-orange-400">Outstanding: {cad(data.outstanding)}</span>
+      {/if}
+      <a href="/erp/invoices/new" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded transition-colors">New Invoice</a>
+    </div>
   </div>
 
   <div class="flex gap-1 mb-4">

@@ -90,11 +90,9 @@
         {marking ? 'Saving…' : 'Mark Paid'}
       </button>
     {/if}
-    {#if data.hasPdf}
-      <a href="/api/invoices/{data.invoice.id}/pdf" target="_blank" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors">
-        View PDF
-      </a>
-    {/if}
+    <a href="/api/invoices/{data.invoice.id}/pdf" target="_blank" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors">
+      Download PDF
+    </a>
     <a href="/erp/invoices/{data.invoice.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
   </div>
 </div>

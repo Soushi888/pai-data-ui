@@ -5,13 +5,14 @@
 
   type FilterTab = 'active' | 'all' | 'archived'
   let activeTab = $state<FilterTab>('active')
+  let typeFilter = $state<'all' | 'client' | 'ovn' | 'r&d'>('all')
 
   const visibleProjects = $derived(
-    activeTab === 'all'
-      ? data.projects
-      : activeTab === 'archived'
-        ? data.projects.filter((p) => p.status === 'archived')
-        : data.projects.filter((p) => p.status !== 'archived')
+    data.projects
+      .filter((p) =>
+        activeTab === 'all' ? true : activeTab === 'archived' ? p.status === 'archived' : p.status !== 'archived'
+      )
+      .filter((p) => typeFilter === 'all' ? true : p.project_type === typeFilter)
   )
 
   const priorityDot: Record<string, string> = {
@@ -32,18 +33,33 @@
 <div class="p-6 max-w-4xl">
   <h1 class="text-xl font-semibold text-gray-100 mb-4">Projects</h1>
 
-  <div class="flex gap-1 mb-6">
-    {#each (['active', 'all', 'archived'] as const) as tab}
-      <button
-        onclick={() => (activeTab = tab)}
-        class="px-3 py-1 text-xs rounded transition-colors
-          {activeTab === tab
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}"
-      >
-        {tab === 'active' ? 'Active' : tab === 'all' ? 'All' : 'Archived'}
-      </button>
-    {/each}
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex gap-1">
+      {#each (['active', 'all', 'archived'] as const) as tab}
+        <button
+          onclick={() => (activeTab = tab)}
+          class="px-3 py-1 text-xs rounded transition-colors
+            {activeTab === tab
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}"
+        >
+          {tab === 'active' ? 'Active' : tab === 'all' ? 'All' : 'Archived'}
+        </button>
+      {/each}
+    </div>
+    <div class="flex gap-1">
+      {#each (['all', 'client', 'ovn', 'r&d'] as const) as t}
+        <button
+          onclick={() => (typeFilter = t)}
+          class="px-3 py-1 text-xs rounded transition-colors
+            {typeFilter === t
+              ? 'bg-gray-600 text-white'
+              : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800'}"
+        >
+          {t}
+        </button>
+      {/each}
+    </div>
   </div>
 
   {#if visibleProjects.length === 0}

@@ -45,7 +45,8 @@
     <h1 class="text-xl font-semibold text-gray-100">New Project</h1>
   </div>
 
-  <form onsubmit={submit} class="space-y-4">
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <form onsubmit={submit} onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter') e.currentTarget.requestSubmit() }} class="space-y-4">
     <div>
       <label class="text-xs text-gray-500 block mb-1">Title *</label>
       <input bind:value={title} required class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />

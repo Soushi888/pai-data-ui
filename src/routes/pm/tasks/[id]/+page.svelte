@@ -2,6 +2,7 @@
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
   import TagList from '$lib/components/shared/TagList.svelte'
   import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
+  import MarkdownViewer from '$lib/components/shared/MarkdownViewer.svelte'
   import { invalidateAll } from '$app/navigation'
 
   let { data } = $props()
@@ -13,9 +14,9 @@
   let t_shirt_size = $state(data.task.t_shirt_size ?? '')
   let epic = $state(data.task.epic ?? '')
   let tags = $state<string[]>(data.task.tags ?? [])
-  let body = $state(data.body)
   let saving = $state(false)
   let saved = $state(false)
+  let snapshot: { title: string; status: 'todo' | 'in-progress' | 'done' | 'blocked'; priority: 'low' | 'medium' | 'high' | 'critical'; t_shirt_size: string; epic: string; tags: string[] } | null = null
 
   let logDate = $state(new Date().toISOString().split('T')[0])
   let logHours = $state<number>(1)
@@ -23,7 +24,7 @@
   let logging = $state(false)
 
   const totalHours = $derived(
-    (data.task.time_logs ?? []).reduce((s, l) => s + l.hours, 0)
+    (data.task.time_logs ?? []).reduce((s, l) => s + (Number(l.hours) || 0), 0)
   )
 
   const inputClass = () =>
@@ -31,6 +32,26 @@
 
   const selectClass = () =>
     `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default appearance-none'}`
+
+  function startEdit() {
+    snapshot = { title, status, priority, t_shirt_size, epic, tags: [...tags] }
+    editing = true
+  }
+
+  function cancel() {
+    if (snapshot) {
+      ;({ title, status, priority, t_shirt_size, epic } = snapshot)
+      tags = [...snapshot.tags]
+      snapshot = null
+    }
+    editing = false
+  }
+
+  async function apply() {
+    await save()
+    snapshot = null
+    editing = false
+  }
 
   async function save() {
     saving = true
@@ -64,7 +85,9 @@
   }
 </script>
 
-<div class="p-6 max-w-4xl">
+<svelte:window onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter' && editing && !saving) apply() }} />
+
+<div class="p-6 max-w-6xl">
   <div class="flex items-center gap-3 mb-6">
     <a href="/pm/tasks" class="text-gray-500 hover:text-gray-300 text-sm">← Tasks</a>
     <a href="/pm/projects/{data.task.project_id}" class="text-gray-500 hover:text-gray-300 text-sm">{data.projectTitle}</a>
@@ -73,19 +96,22 @@
     <StatusBadge status={data.task.priority} />
     <div class="ml-auto flex gap-2">
       <a href="/pm/tasks/{data.task.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
-      <button
-        onclick={() => (editing = !editing)}
-        class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
-      >{editing ? 'Done editing' : 'Edit'}</button>
+      {#if !editing}
+        <button
+          onclick={startEdit}
+          class="text-xs px-3 py-1.5 rounded transition-colors bg-gray-800 text-gray-400 hover:bg-gray-700"
+        >Edit</button>
+      {/if}
     </div>
   </div>
 
-  <div class="grid grid-cols-3 gap-6">
-    <div class="col-span-2 space-y-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="space-y-4">
       <div>
         <label class="text-xs text-gray-500 block mb-1">Title</label>
         <input bind:value={title} readonly={!editing} class={inputClass()} />
       </div>
+
       <div class="grid grid-cols-3 gap-4">
         <div>
           <label class="text-xs text-gray-500 block mb-1">Status</label>
@@ -106,10 +132,12 @@
           </select>
         </div>
       </div>
+
       <div>
         <label class="text-xs text-gray-500 block mb-1">Epic</label>
         <input bind:value={epic} readonly={!editing} class={inputClass()} />
       </div>
+
       <div>
         <label class="text-xs text-gray-500 block mb-1">Tags</label>
         {#if editing}
@@ -142,64 +170,70 @@
       {/if}
 
       {#if editing}
-        <button onclick={save} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-          {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
-        </button>
+        <div class="flex gap-2">
+          <button onclick={apply} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+            {saving ? 'Applying…' : 'Apply'}
+          </button>
+          <button onclick={cancel} disabled={saving} class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+        </div>
+      {/if}
+
+      {#if data.body}
+        <div class="pt-4 border-t border-gray-800">
+          <p class="text-xs text-gray-500 mb-3">Progress Notes</p>
+          <MarkdownViewer body={data.body} />
+        </div>
       {/if}
     </div>
 
     <div>
-      <label class="text-xs text-gray-500 block mb-1">Progress Notes</label>
-      <textarea bind:value={body} rows="10" class="bg-gray-800 border border-gray-700 text-gray-300 rounded px-3 py-2 text-sm font-mono w-full resize-none focus:outline-none focus:border-blue-500 mb-2"></textarea>
-      <button onclick={save} class="text-xs text-gray-500 hover:text-gray-300">Save notes</button>
-    </div>
-  </div>
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        Time Logs <span class="text-gray-600 font-normal normal-case">— {totalHours}h total</span>
+      </h2>
 
-  <!-- Time logs -->
-  <div class="mt-8">
-    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-      Time Logs <span class="text-gray-600 font-normal">— {totalHours}h total</span>
-    </h2>
-
-    {#if (data.task.time_logs ?? []).length > 0}
-      <table class="w-full text-sm mb-4">
-        <thead>
-          <tr class="text-gray-500 text-left">
-            <th class="pb-2 font-normal">Date</th>
-            <th class="pb-2 font-normal">Hours</th>
-            <th class="pb-2 font-normal">Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each [...(data.task.time_logs ?? [])].reverse() as log}
-            <tr class="border-t border-gray-800">
-              <td class="py-2 text-gray-400 tabular-nums">{log.date}</td>
-              <td class="py-2 text-blue-400 tabular-nums">{log.hours}h</td>
-              <td class="py-2 text-gray-500 text-xs">{log.notes ?? ''}</td>
+      {#if (data.task.time_logs ?? []).length > 0}
+        <table class="w-full text-sm mb-4">
+          <thead>
+            <tr class="text-gray-500 text-left">
+              <th class="pb-2 font-normal">Date</th>
+              <th class="pb-2 font-normal">Hours</th>
+              <th class="pb-2 font-normal">Notes</th>
             </tr>
-          {/each}
-        </tbody>
-      </table>
-    {:else}
-      <p class="text-gray-600 text-xs mb-4">No time logged yet.</p>
-    {/if}
+          </thead>
+          <tbody>
+            {#each [...(data.task.time_logs ?? [])].reverse() as log}
+              <tr class="border-t border-gray-800">
+                <td class="py-2 text-gray-400 tabular-nums">{log.date}</td>
+                <td class="py-2 text-blue-400 tabular-nums">{Number(log.hours) || '?'}h</td>
+                <td class="py-2 text-gray-500 text-xs">{log.notes ?? ''}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {:else}
+        <p class="text-gray-600 text-xs mb-4">No time logged yet.</p>
+      {/if}
 
-    <form onsubmit={logTime} class="flex gap-2 items-end">
-      <div>
-        <label class="text-xs text-gray-500 block mb-1">Date</label>
-        <input type="date" bind:value={logDate} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-      </div>
-      <div>
-        <label class="text-xs text-gray-500 block mb-1">Hours</label>
-        <input type="number" bind:value={logHours} min="0.25" step="0.25" class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-24" />
-      </div>
-      <div class="flex-1">
-        <label class="text-xs text-gray-500 block mb-1">Notes</label>
-        <input bind:value={logNotes} placeholder="What did you work on?" class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
-      </div>
-      <button type="submit" disabled={logging} class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-        {logging ? '…' : '+ Log'}
-      </button>
-    </form>
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <form onsubmit={logTime} onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter') e.currentTarget.requestSubmit() }} class="flex gap-2 items-end">
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Date</label>
+          <input type="date" bind:value={logDate} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Hours</label>
+          <input type="number" bind:value={logHours} min="0.25" step="0.25" class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-24" />
+        </div>
+        <div class="flex-1">
+          <label class="text-xs text-gray-500 block mb-1">Notes</label>
+          <input bind:value={logNotes} placeholder="What did you work on?" class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+        </div>
+        <button type="submit" disabled={logging} class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+          {logging ? '…' : '+ Log'}
+        </button>
+      </form>
+    </div>
   </div>
 </div>

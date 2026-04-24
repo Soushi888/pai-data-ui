@@ -18,6 +18,7 @@ export const load: PageServerLoad = async () => {
   ])
 
   const projects = projectsR._tag === 'Right' ? projectsR.right : []
+  projects.sort((a, b) => b.updated.localeCompare(a.updated))
   const tasks = tasksR._tag === 'Right' ? tasksR.right : []
   const monday = getMonday()
 

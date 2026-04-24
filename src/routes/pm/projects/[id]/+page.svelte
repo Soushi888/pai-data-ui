@@ -2,6 +2,7 @@
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
   import TagList from '$lib/components/shared/TagList.svelte'
   import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
+  import MarkdownViewer from '$lib/components/shared/MarkdownViewer.svelte'
   import { invalidateAll } from '$app/navigation'
 
   let { data } = $props()
@@ -12,9 +13,9 @@
   let status = $state(data.project.status)
   let organization = $state(data.project.organization ?? '')
   let tags = $state<string[]>(data.project.tags ?? [])
-  let body = $state(data.body)
   let saving = $state(false)
   let saved = $state(false)
+  let snapshot: { title: string; project_type: 'client' | 'ovn' | 'r&d'; status: 'active' | 'on-hold' | 'completed' | 'archived'; organization: string; tags: string[] } | null = null
 
   let newTaskTitle = $state('')
   let newTaskPriority = $state('medium')
@@ -25,6 +26,26 @@
 
   const selectClass = () =>
     `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default appearance-none'}`
+
+  function startEdit() {
+    snapshot = { title, project_type, status, organization, tags: [...tags] }
+    editing = true
+  }
+
+  function cancel() {
+    if (snapshot) {
+      ;({ title, project_type, status, organization } = snapshot)
+      tags = [...snapshot.tags]
+      snapshot = null
+    }
+    editing = false
+  }
+
+  async function apply() {
+    await save()
+    snapshot = null
+    editing = false
+  }
 
   async function save() {
     saving = true
@@ -80,7 +101,9 @@
   )
 </script>
 
-<div class="p-6 max-w-5xl">
+<svelte:window onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter' && editing && !saving) apply() }} />
+
+<div class="p-6 max-w-6xl">
   <div class="flex items-center gap-3 mb-6">
     <a href="/pm/projects" class="text-gray-500 hover:text-gray-300 text-sm">← Projects</a>
     <h1 class="text-xl font-semibold text-gray-100">{data.project.title}</h1>
@@ -88,15 +111,17 @@
     <StatusBadge status={data.project.project_type} />
     <div class="ml-auto flex gap-2">
       <a href="/pm/projects/{data.project.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
-      <button
-        onclick={() => (editing = !editing)}
-        class="text-xs px-3 py-1.5 rounded transition-colors {editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
-      >{editing ? 'Done editing' : 'Edit'}</button>
+      {#if !editing}
+        <button
+          onclick={startEdit}
+          class="text-xs px-3 py-1.5 rounded transition-colors bg-gray-800 text-gray-400 hover:bg-gray-700"
+        >Edit</button>
+      {/if}
     </div>
   </div>
 
-  <div class="grid grid-cols-3 gap-6 mb-8">
-    <div class="col-span-2 space-y-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="space-y-4">
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="text-xs text-gray-500 block mb-1">Title</label>
@@ -119,11 +144,13 @@
           </select>
         </div>
       </div>
+
       {#if data.project.opportunity_ref}
         <p class="text-xs text-gray-500">
           Opportunity: <a href="/crm/opportunities/{data.project.opportunity_ref}" class="text-blue-400 hover:text-blue-300">{data.project.opportunity_ref}</a>
         </p>
       {/if}
+
       {#if (data.project.external_refs ?? []).length > 0}
         <div>
           <p class="text-xs text-gray-500 mb-1">External refs</p>
@@ -135,6 +162,7 @@
           {/each}
         </div>
       {/if}
+
       <div>
         <label class="text-xs text-gray-500 block mb-1">Tags</label>
         {#if editing}
@@ -143,10 +171,14 @@
           <TagList {tags} />
         {/if}
       </div>
+
       {#if editing}
         <div class="flex gap-2">
-          <button onclick={save} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-            {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
+          <button onclick={apply} disabled={saving} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+            {saving ? 'Applying…' : 'Apply'}
+          </button>
+          <button onclick={cancel} disabled={saving} class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+            Cancel
           </button>
           {#if status !== 'archived'}
             <button onclick={archive} disabled={saving} class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
@@ -155,47 +187,49 @@
           {/if}
         </div>
       {/if}
+
+      {#if data.body}
+        <div class="pt-4 border-t border-gray-800">
+          <p class="text-xs text-gray-500 mb-3">Overview</p>
+          <MarkdownViewer body={data.body} />
+        </div>
+      {/if}
     </div>
 
     <div>
-      <label class="text-xs text-gray-500 block mb-1">Overview</label>
-      <textarea bind:value={body} rows="14" class="bg-gray-800 border border-gray-700 text-gray-300 rounded px-3 py-2 text-sm font-mono w-full resize-none focus:outline-none"></textarea>
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Tasks ({data.tasks.length})</h2>
+
+      <table class="w-full text-sm mb-4">
+        <tbody>
+          {#each sortedTasks as task}
+            <tr class="border-t border-gray-800 hover:bg-gray-800/50">
+              <td class="py-2 w-28"><StatusBadge status={task.status} /></td>
+              <td class="py-2">
+                <a href="/pm/tasks/{task.id}" class="text-gray-300 hover:text-blue-300">{task.title}</a>
+              </td>
+              <td class="py-2 w-12 text-xs text-gray-600">{task.t_shirt_size ?? ''}</td>
+              <td class="py-2 w-24"><StatusBadge status={task.priority} /></td>
+            </tr>
+          {:else}
+            <tr><td colspan="4" class="py-4 text-gray-600 text-xs">No tasks yet.</td></tr>
+          {/each}
+        </tbody>
+      </table>
+
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <form onsubmit={addTask} onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter') e.currentTarget.requestSubmit() }} class="flex gap-2">
+        <input
+          bind:value={newTaskTitle}
+          placeholder="New task title…"
+          class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 flex-1"
+        />
+        <select bind:value={newTaskPriority} class="bg-gray-800 border border-gray-700 text-gray-400 rounded px-3 py-2 text-sm focus:outline-none">
+          <option value="low">low</option><option value="medium" selected>medium</option><option value="high">high</option><option value="critical">critical</option>
+        </select>
+        <button type="submit" disabled={addingTask || !newTaskTitle.trim()} class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
+          + Add
+        </button>
+      </form>
     </div>
-  </div>
-
-  <!-- Tasks -->
-  <div>
-    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Tasks ({data.tasks.length})</h2>
-
-    <table class="w-full text-sm mb-4">
-      <tbody>
-        {#each sortedTasks as task}
-          <tr class="border-t border-gray-800 hover:bg-gray-800/50">
-            <td class="py-2 w-28"><StatusBadge status={task.status} /></td>
-            <td class="py-2">
-              <a href="/pm/tasks/{task.id}" class="text-gray-300 hover:text-blue-300">{task.title}</a>
-            </td>
-            <td class="py-2 w-12 text-xs text-gray-600">{task.t_shirt_size ?? ''}</td>
-            <td class="py-2 w-24"><StatusBadge status={task.priority} /></td>
-          </tr>
-        {:else}
-          <tr><td colspan="4" class="py-4 text-gray-600 text-xs">No tasks yet.</td></tr>
-        {/each}
-      </tbody>
-    </table>
-
-    <form onsubmit={addTask} class="flex gap-2">
-      <input
-        bind:value={newTaskTitle}
-        placeholder="New task title…"
-        class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 flex-1"
-      />
-      <select bind:value={newTaskPriority} class="bg-gray-800 border border-gray-700 text-gray-400 rounded px-3 py-2 text-sm focus:outline-none">
-        <option value="low">low</option><option value="medium" selected>medium</option><option value="high">high</option><option value="critical">critical</option>
-      </select>
-      <button type="submit" disabled={addingTask || !newTaskTitle.trim()} class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-        + Add
-      </button>
-    </form>
   </div>
 </div>

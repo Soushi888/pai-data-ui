@@ -25,7 +25,10 @@
 </script>
 
 <div class="p-6 max-w-6xl">
-  <h1 class="text-xl font-semibold text-gray-100 mb-4">Contacts <span class="text-gray-500 font-normal text-base">({filtered.length})</span></h1>
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-semibold text-gray-100">Contacts <span class="text-gray-500 font-normal text-base">({filtered.length})</span></h1>
+    <a href="/crm/contacts/new" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors">+ New Contact</a>
+  </div>
 
   <!-- Filters -->
   <div class="flex gap-4 mb-4 flex-wrap items-center">

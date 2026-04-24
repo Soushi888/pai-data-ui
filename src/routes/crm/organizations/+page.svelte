@@ -14,7 +14,10 @@
 </script>
 
 <div class="p-6 max-w-5xl">
-  <h1 class="text-xl font-semibold text-gray-100 mb-4">Organizations</h1>
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-semibold text-gray-100">Organizations</h1>
+    <a href="/crm/organizations/new" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors">+ New Organization</a>
+  </div>
 
   <div class="flex gap-1 mb-4">
     {#each ['all', 'active', 'inactive'] as s}

@@ -54,7 +54,10 @@
 </script>
 
 <div class="p-6">
-  <h1 class="text-xl font-semibold text-gray-100 mb-4">Opportunities</h1>
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-semibold text-gray-100">Opportunities</h1>
+    <a href="/crm/opportunities/new" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors">+ New Opportunity</a>
+  </div>
 
   <div class="flex gap-1 mb-6">
     {#each (['active', 'all', 'archived'] as const) as tab}

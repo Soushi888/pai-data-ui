@@ -1,5 +1,7 @@
+import { existsSync } from 'node:fs'
 import { Effect } from 'effect'
 import type { DataError } from './errors.js'
+import { FileNotFoundError } from './errors.js'
 import { dataPath, listDir, readEntity, requireEntity, writeEntity } from './parser.js'
 import type { EntityWithBody, Organization } from './types.js'
 
@@ -31,4 +33,24 @@ export function updateOrganization(
       () => updated
     )
   })
+}
+
+export function createOrganization(
+  data: Omit<Organization, 'id' | 'type' | 'created'>,
+  body = ''
+): Effect.Effect<Organization, DataError> {
+  const id = `org-${data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`
+  const org: Organization = {
+    ...data,
+    id,
+    type: 'organization',
+    created: new Date().toISOString().split('T')[0]
+  }
+  if (existsSync(filePath(id))) {
+    return Effect.fail(new FileNotFoundError({ id: 'conflict' }))
+  }
+  return Effect.map(
+    writeEntity(filePath(id), org as unknown as Record<string, unknown>, body),
+    () => org
+  )
 }

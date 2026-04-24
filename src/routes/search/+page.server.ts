@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ url }) => {
   }
   if (opps._tag === 'Right') {
     for (const o of opps.right) {
-      if (matches(o.title, o.organization, o.notes, ...(o.tags ?? []))) {
+      if (matches(o.title, o.organization, o.description, ...(o.tags ?? []))) {
         results.push({ type: 'opportunity', id: o.id, title: o.title, excerpt: o.organization })
       }
     }

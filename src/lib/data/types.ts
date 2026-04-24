@@ -27,7 +27,7 @@ export interface Opportunity {
   tags: string[];
   created: string;
   updated: string;
-  notes?: string;
+  description?: string;
 }
 
 export interface Organization {
@@ -127,6 +127,63 @@ export interface Task {
   tags?: string[];
   created: string;
   updated: string;
+}
+
+// ── ERP Finance ───────────────────────────────────────────────────────────────
+
+export type ExpenseCategory =
+  | 'housing' | 'utilities' | 'subscriptions' | 'transport'
+  | 'food' | 'health' | 'other'
+
+export type ExpenseRecurrence = 'monthly' | 'annual' | 'one-time'
+
+export interface Expense {
+  id: string;
+  type: 'expense';
+  name: string;
+  category: ExpenseCategory;
+  scope: 'personal' | 'freelance' | 'mixed';
+  recurrence: ExpenseRecurrence;
+  status: 'active' | 'planned' | 'cancelled';
+  amount_cad: number;
+  amount_original: number;
+  currency_original: 'CAD' | 'USD';
+  billing_day?: number | null;
+  next_due?: string | null;
+  start_date: string;
+  end_date?: string | null;
+  tags: string[];
+  notes?: string | null;
+  created: string;
+  updated: string;
+}
+
+export interface AdHocIncome {
+  id: string;
+  type: 'income';
+  name: string;
+  category: 'tax-return' | 'grant' | 'salary' | 'gift' | 'other';
+  scope: 'personal' | 'freelance';
+  amount_cad: number;
+  amount_original: number;
+  currency_original: 'CAD' | 'USD';
+  date: string;
+  tags: string[];
+  notes?: string | null;
+  created: string;
+}
+
+export interface Payment {
+  id: string;
+  type: 'payment';
+  expense_id: string;
+  date: string;
+  amount_cad: number;
+  amount_original: number;
+  currency_original: 'CAD' | 'USD';
+  notes?: string | null;
+  tags: string[];
+  created: string;
 }
 
 // ── Shared ────────────────────────────────────────────────────────────────────

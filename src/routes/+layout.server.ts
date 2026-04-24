@@ -1,5 +1,7 @@
 import { Effect } from 'effect'
 import { listContacts } from '$lib/data/contacts.js'
+import { listExpenses } from '$lib/data/expenses.js'
+import { listIncome } from '$lib/data/income.js'
 import { listInvoices } from '$lib/data/invoices.js'
 import { listOpportunities } from '$lib/data/opportunities.js'
 import { listOrganizations } from '$lib/data/organizations.js'
@@ -8,13 +10,15 @@ import { listTasks } from '$lib/data/tasks.js'
 import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async () => {
-  const [contacts, opps, orgs, invoices, projects, tasks] = await Promise.all([
+  const [contacts, opps, orgs, invoices, projects, tasks, expenses, incomeList] = await Promise.all([
     Effect.runPromise(Effect.either(listContacts())),
     Effect.runPromise(Effect.either(listOpportunities())),
     Effect.runPromise(Effect.either(listOrganizations())),
     Effect.runPromise(Effect.either(listInvoices())),
     Effect.runPromise(Effect.either(listProjects())),
-    Effect.runPromise(Effect.either(listTasks()))
+    Effect.runPromise(Effect.either(listTasks())),
+    Effect.runPromise(Effect.either(listExpenses())),
+    Effect.runPromise(Effect.either(listIncome()))
   ])
 
   return {
@@ -24,7 +28,9 @@ export const load: LayoutServerLoad = async () => {
       organizations: orgs._tag === 'Right' ? orgs.right.length : 0,
       invoices: invoices._tag === 'Right' ? invoices.right.length : 0,
       projects: projects._tag === 'Right' ? projects.right.filter((p) => p.status !== 'archived').length : 0,
-      tasks: tasks._tag === 'Right' ? tasks.right.length : 0
+      tasks: tasks._tag === 'Right' ? tasks.right.length : 0,
+      expenses: expenses._tag === 'Right' ? expenses.right.filter((e) => e.status === 'active').length : 0,
+      income: incomeList._tag === 'Right' ? incomeList.right.length : 0
     }
   }
 }

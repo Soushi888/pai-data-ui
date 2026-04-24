@@ -20,6 +20,7 @@
     'r&d': 'text-yellow-300 bg-yellow-900/50',
     completed: 'text-green-300 bg-green-900/50',
     archived: 'text-gray-500 bg-gray-800',
+    planned: 'text-blue-300 bg-blue-900/50',
   }
 
   let { status }: { status: string } = $props()

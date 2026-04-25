@@ -53,3 +53,4 @@
     class="bg-transparent text-gray-200 text-sm outline-none flex-1 min-w-20 placeholder-gray-600"
   />
 </div>
+<p class="text-xs text-gray-600 mt-1">Press <kbd class="px-1 py-0.5 bg-gray-700 text-gray-400 rounded text-xs">Enter</kbd> or <kbd class="px-1 py-0.5 bg-gray-700 text-gray-400 rounded text-xs">,</kbd> to add a tag</p>

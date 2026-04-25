@@ -1,10 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
 
   let name = $state('')
   let domain = $state('')
   let status = $state<'active' | 'inactive'>('active')
-  let tags = $state('')
+  let tags = $state<string[]>([])
   let saving = $state(false)
   let error = $state('')
 
@@ -19,7 +20,7 @@
         name,
         domain,
         status,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags
       })
     })
     const json = await res.json()
@@ -56,8 +57,8 @@
       </select>
     </div>
     <div>
-      <label class="text-xs text-gray-500 block mb-1">Tags (comma-separated)</label>
-      <input bind:value={tags} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+      <label class="text-xs text-gray-500 block mb-1">Tags</label>
+      <ChipsInput bind:tags />
     </div>
     {#if error}
       <p class="text-red-400 text-xs">{error}</p>

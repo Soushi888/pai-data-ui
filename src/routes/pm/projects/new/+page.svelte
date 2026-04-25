@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
 
   let { data } = $props()
 
@@ -8,7 +9,7 @@
   let status = $state<'active' | 'on-hold' | 'completed' | 'archived'>('active')
   let organization = $state(data.prefill?.organization ?? '')
   let opportunity_ref = $state(data.prefill?.opportunity_ref ?? '')
-  let tags = $state('')
+  let tags = $state<string[]>([])
   let saving = $state(false)
 
   async function submit(e: Event) {
@@ -21,7 +22,7 @@
         title, project_type, status,
         organization: organization || undefined,
         opportunity_ref: opportunity_ref || undefined,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags
       })
     })
     const json = await res.json()
@@ -79,8 +80,8 @@
       </div>
     {/if}
     <div>
-      <label class="text-xs text-gray-500 block mb-1">Tags (comma-separated)</label>
-      <input bind:value={tags} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+      <label class="text-xs text-gray-500 block mb-1">Tags</label>
+      <ChipsInput bind:tags />
     </div>
     <button type="submit" disabled={saving || !title} class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
       {saving ? 'Creating…' : 'Create Project'}

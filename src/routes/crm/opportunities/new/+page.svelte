@@ -1,13 +1,14 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import type { Opportunity } from '$lib/data/types.js'
+  import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
 
   let title = $state('')
   let organization = $state('')
   let contact = $state('')
   let status = $state<Opportunity['status']>('prospect')
   let value_cad = $state('')
-  let tags = $state('')
+  let tags = $state<string[]>([])
   let saving = $state(false)
   let error = $state('')
 
@@ -24,7 +25,7 @@
         contact: contact || '',
         status,
         value_cad: value_cad ? parseFloat(value_cad) : undefined,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags
       })
     })
     const json = await res.json()
@@ -76,8 +77,8 @@
       </div>
     </div>
     <div>
-      <label class="text-xs text-gray-500 block mb-1">Tags (comma-separated)</label>
-      <input bind:value={tags} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
+      <label class="text-xs text-gray-500 block mb-1">Tags</label>
+      <ChipsInput bind:tags />
     </div>
     {#if error}
       <p class="text-red-400 text-xs">{error}</p>

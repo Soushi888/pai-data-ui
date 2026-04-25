@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types.js'
   import type { Organization, Contact, Opportunity } from '$lib/data/types.js'
+  import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
 
   let { data }: { data: PageData } = $props()
 
@@ -86,6 +87,9 @@
   const removeLine = (i: number) => lines.splice(i, 1)
   const amount = (l: { quantity: number; unit_price: number }) => l.quantity * l.unit_price
   const subtotal = $derived(lines.reduce((s, l) => s + amount(l), 0))
+
+  // ── tags ──────────────────────────────────────────────────
+  let tags = $state<string[]>([])
 
   // ── tax ───────────────────────────────────────────────────
   let taxRate = $state('')
@@ -239,8 +243,9 @@
         </select>
       </div>
       <div class="col-span-2">
-        <label class={labelCls} for="tags">Tags (comma-separated)</label>
-        <input id="tags" name="tags" class={inputCls} placeholder="client, project, holochain" />
+        <label class={labelCls}>Tags</label>
+        <ChipsInput bind:tags />
+        <input type="hidden" name="tags" value={tags.join(',')} />
       </div>
     </div>
 

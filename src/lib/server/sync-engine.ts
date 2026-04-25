@@ -122,7 +122,12 @@ class SyncEngine {
     import('chokidar')
       .then(({ watch }) => {
         const watcher = watch(`${DATA_ROOT}/**/*.md`, {
-          ignored: /(^|[/\\])[\._]/,
+          ignored: (filePath: string) => {
+            if (!filePath.startsWith(DATA_ROOT)) return false
+            const rel = filePath.slice(DATA_ROOT.length)
+            const segments = rel.split('/').filter(Boolean)
+            return segments.some((s) => SKIP_DIRS.has(s) || s.startsWith('.'))
+          },
           persistent: false,
           ignoreInitial: true,
         })

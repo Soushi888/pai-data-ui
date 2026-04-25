@@ -26,7 +26,6 @@
         {
             label: "ERP",
             items: [
-                { href: "/erp/budget", label: "Budget", count: () => null },
                 { href: "/erp/expenses", label: "Expenses", count: () => counts.expenses },
                 { href: "/erp/income", label: "Income", count: () => counts.income },
                 { href: "/erp", label: "Invoices", count: () => counts.invoices },
@@ -38,6 +37,7 @@
             items: [
                 { href: "/pm", label: "Active Projects", count: () => counts.projects },
                 { href: "/pm/tasks", label: "Tasks", count: () => counts.tasks },
+                { href: "/pm/focus", label: "Focus", count: () => null },
             ],
         },
     ];

@@ -186,6 +186,40 @@ export interface Payment {
   created: string;
 }
 
+// ── PM / Focus ───────────────────────────────────────────────────────────────
+
+export interface FocusItem {
+  id: string;
+  text: string;
+  done: boolean;
+  linked_ref?: string;
+}
+
+export interface FocusDaily {
+  id: string;
+  type: "focus-daily";
+  date: string;
+  week?: string;
+  status: "active" | "archived";
+  items: FocusItem[];
+  carried_from?: string;
+  created: string;
+  updated: string;
+}
+
+export interface FocusWeek {
+  id: string;
+  type: "focus-week";
+  week: string;
+  status: "active" | "archived";
+  items: FocusItem[];
+  carried_from?: string;
+  created: string;
+  updated: string;
+}
+
+export type FocusList = FocusDaily | FocusWeek;
+
 // ── Shared ────────────────────────────────────────────────────────────────────
 
 export interface EntityWithBody<T> {

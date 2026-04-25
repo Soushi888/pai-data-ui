@@ -11,6 +11,10 @@ import type { EntityWithBody, Invoice } from './types.js'
 const dir = () => dataPath('ERP', 'invoices')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
+/**
+ * Lists all invoices from the SQLite index.
+ * @returns Effect resolving to Invoice[], or failing with DataError.
+ */
 export function listInvoices(): Effect.Effect<Invoice[], DataError> {
   return Effect.try({
     try: () => listByType<Invoice>('invoice'),
@@ -19,10 +23,22 @@ export function listInvoices(): Effect.Effect<Invoice[], DataError> {
 }
 
 
+/**
+ * Retrieves a single invoice by ID with its markdown body.
+ * @param id - Invoice identifier.
+ * @returns Effect resolving to entity data and markdown body, or failing with DataError.
+ */
 export function getInvoice(id: string): Effect.Effect<EntityWithBody<Invoice>, DataError> {
   return requireEntity<Invoice>(filePath(id), id)
 }
 
+/**
+ * Updates an existing invoice with a partial patch.
+ * @param id - Invoice identifier.
+ * @param patch - Fields to update; unspecified fields are preserved.
+ * @param body - Optional replacement markdown body.
+ * @returns Effect resolving to the updated Invoice, or failing with DataError.
+ */
 export function updateInvoice(
   id: string,
   patch: Partial<Invoice>,
@@ -37,6 +53,12 @@ export function updateInvoice(
   })
 }
 
+/**
+ * Creates a new invoice with an auto-assigned sequential invoice number (format: "INxxxxxx").
+ * The number increments based on existing invoice count.
+ * @param data - Invoice fields excluding id, type, number, and created.
+ * @returns Effect resolving to the created Invoice, or failing with DataError.
+ */
 export function createInvoice(
   data: Omit<Invoice, 'id' | 'type' | 'number' | 'created' | 'updated'>
 ): Effect.Effect<Invoice, DataError> {
@@ -74,6 +96,12 @@ export function createInvoice(
   })
 }
 
+/**
+ * Generates a PDF document buffer from invoice data using PDFKit.
+ * Renders invoice header, contact/organization details, line items table, subtotal, taxes, and total.
+ * @param invoice - The invoice entity to render.
+ * @returns Promise resolving to a Buffer containing the PDF binary data.
+ */
 export function generateInvoicePdf(invoice: Invoice): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: 'LETTER' })
@@ -178,6 +206,12 @@ export function generateInvoicePdf(invoice: Invoice): Promise<Buffer> {
   })
 }
 
+/**
+ * Resolves the file path to an existing PDF for the given invoice ID.
+ * Checks multiple candidate locations (build output, static/, etc.).
+ * @param id - Invoice identifier.
+ * @returns Absolute path to the PDF file if found, or null if no PDF has been generated yet.
+ */
 export function pdfPath(id: string): string | null {
   const exportsDir = join(DATA_ROOT, 'ERP', 'exports')
 

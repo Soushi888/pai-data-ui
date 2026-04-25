@@ -18,6 +18,11 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+/**
+ * Computes the ISO 8601 week string for a given date.
+ * @param d - The date to compute the week for.
+ * @returns ISO week string in format "YYYY-Www" (e.g. "2026-W17").
+ */
 export function isoWeek(d: Date): string {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
@@ -31,14 +36,26 @@ export function isoWeek(d: Date): string {
   return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
+/**
+ * Returns the focus-daily list ID for today's date.
+ * @returns ID string in format "focus-daily-YYYY-MM-DD".
+ */
 export function todayDailyId(): string {
   return `focus-daily-${today()}`;
 }
 
+/**
+ * Returns the focus-week list ID for the current ISO week.
+ * @returns ID string in format "focus-week-YYYY-Www" (e.g. "focus-week-2026-W17").
+ */
 export function currentWeekId(): string {
   return `focus-week-${isoWeek(new Date())}`;
 }
 
+/**
+ * Lists all daily focus lists.
+ * @returns Effect resolving to FocusDaily[], or failing with DataError.
+ */
 export function listFocusDaily(): Effect.Effect<FocusDaily[], DataError> {
   return Effect.try({
     try: () => listByType<FocusDaily>("focus-daily"),
@@ -46,6 +63,10 @@ export function listFocusDaily(): Effect.Effect<FocusDaily[], DataError> {
   });
 }
 
+/**
+ * Lists all weekly focus lists.
+ * @returns Effect resolving to FocusWeek[], or failing with DataError.
+ */
 export function listFocusWeek(): Effect.Effect<FocusWeek[], DataError> {
   return Effect.try({
     try: () => listByType<FocusWeek>("focus-week"),
@@ -53,12 +74,23 @@ export function listFocusWeek(): Effect.Effect<FocusWeek[], DataError> {
   });
 }
 
+/**
+ * Retrieves a focus list by ID (daily or weekly) with its markdown body.
+ * @param id - Focus list identifier, e.g. "focus-daily-2026-04-24" or "focus-week-2026-W17".
+ * @returns Effect resolving to the typed focus list data + body, or failing with DataError.
+ */
 export function getFocusList<T extends FocusList>(
   id: string,
 ): Effect.Effect<EntityWithBody<T>, DataError> {
   return requireEntity<T>(filePath(id), id);
 }
 
+/**
+ * Creates a new focus list (daily or weekly).
+ * @param data - Focus list data to persist.
+ * @param body - Optional initial markdown body.
+ * @returns Effect resolving to the created list, or failing with DataError.
+ */
 export function createFocusList<T extends FocusList>(
   data: T,
   body = "",
@@ -73,6 +105,14 @@ export function createFocusList<T extends FocusList>(
   );
 }
 
+/**
+ * Updates a focus list with a partial patch.
+ * Infers whether the list is daily or weekly from the ID prefix ("focus-daily-" or "focus-week-").
+ * @param id - Focus list identifier.
+ * @param patch - Partial fields to update.
+ * @param body - Optional replacement markdown body.
+ * @returns Effect resolving to the updated list, or failing with DataError.
+ */
 export function updateFocusList<T extends FocusList>(
   id: string,
   patch: Partial<T>,
@@ -91,6 +131,12 @@ export function updateFocusList<T extends FocusList>(
   });
 }
 
+/**
+ * Toggles the done status of an item within a focus list.
+ * @param id - Focus list identifier.
+ * @param itemId - Identifier of the focus item to toggle within the list.
+ * @returns Effect resolving to the updated focus list, or failing with DataError.
+ */
 export function toggleItem(
   id: string,
   itemId: string,
@@ -107,6 +153,13 @@ export function toggleItem(
   });
 }
 
+/**
+ * Adds a new item to a focus list.
+ * @param id - Focus list identifier.
+ * @param text - Display text for the new focus item.
+ * @param linkedRef - Optional reference to a related PAI entity (e.g. a task ID).
+ * @returns Effect resolving to the updated focus list, or failing with DataError.
+ */
 export function addItem(
   id: string,
   text: string,

@@ -80,6 +80,12 @@ function walkDir(dir: string, cb: (filePath: string) => void): void {
   }
 }
 
+/**
+ * Walks all .md files under DATA_ROOT recursively, upserts each into the SQLite index,
+ * and removes stale rows for files that no longer exist on disk.
+ * Skips directories listed in SKIP_DIRS and files named README.md.
+ * @returns An object with `indexed` (count of successfully processed files) and `errors` (count of files that threw).
+ */
 export function rebuildIndex(): { indexed: number; errors: number } {
   const db = getDb()
   const existingPaths = new Set(
@@ -108,9 +114,19 @@ export function rebuildIndex(): { indexed: number; errors: number } {
   return { indexed, errors }
 }
 
+/**
+ * Orchestrates file system watching to keep the SQLite index in sync with markdown file changes in real time.
+ * On start, performs an initial full rebuildIndex pass, then attaches a chokidar watcher for incremental updates.
+ * The watcher upserts entities on add/change events and removes them on unlink events.
+ * Skips directories in SKIP_DIRS and hidden path segments.
+ */
 class SyncEngine {
   private started = false
 
+  /**
+   * Starts the sync engine. Calls rebuildIndex() for the initial sync, then starts the chokidar watcher.
+   * Idempotent: subsequent calls after the first are no-ops.
+   */
   start(): void {
     if (this.started) return
     this.started = true
@@ -140,4 +156,5 @@ class SyncEngine {
   }
 }
 
+/** Exported singleton SyncEngine instance used by the SvelteKit server hooks to manage the live index. */
 export const syncEngine = new SyncEngine()

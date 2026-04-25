@@ -9,6 +9,10 @@ import type { AdHocIncome, EntityWithBody } from './types.js'
 const dir = () => dataPath('ERP', 'income')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
+/**
+ * Lists all income records from the SQLite index.
+ * @returns Effect resolving to AdHocIncome[], or failing with DataError.
+ */
 export function listIncome(): Effect.Effect<AdHocIncome[], DataError> {
   return Effect.try({
     try: () => listByType<AdHocIncome>('income'),
@@ -16,10 +20,21 @@ export function listIncome(): Effect.Effect<AdHocIncome[], DataError> {
   })
 }
 
+/**
+ * Retrieves a single income record by ID with its markdown body.
+ * @param id - Income identifier.
+ * @returns Effect resolving to entity data and markdown body, or failing with DataError.
+ */
 export function getIncome(id: string): Effect.Effect<EntityWithBody<AdHocIncome>, DataError> {
   return requireEntity<AdHocIncome>(filePath(id), id)
 }
 
+/**
+ * Creates a new income record. Income records are immutable after creation.
+ * @param data - Income fields to set.
+ * @param body - Optional initial markdown body.
+ * @returns Effect resolving to the created AdHocIncome, or failing with DataError.
+ */
 export function createIncome(
   data: Omit<AdHocIncome, 'id' | 'type' | 'created'>,
   body = ''

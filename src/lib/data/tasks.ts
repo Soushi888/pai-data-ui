@@ -8,6 +8,10 @@ import type { EntityWithBody, Task, TimeLogEntry } from './types.js'
 const dir = () => dataPath('PM', 'tasks')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
+/**
+ * Lists all tasks from the SQLite index.
+ * @returns Effect resolving to Task[], or failing with DataError.
+ */
 export function listTasks(): Effect.Effect<Task[], DataError> {
   return Effect.try({
     try: () => listByType<Task>('task'),
@@ -16,10 +20,23 @@ export function listTasks(): Effect.Effect<Task[], DataError> {
 }
 
 
+/**
+ * Retrieves a single task by ID with markdown body.
+ * @param id - Task identifier.
+ * @returns Effect resolving to task data + body, or failing with DataError.
+ */
 export function getTask(id: string): Effect.Effect<EntityWithBody<Task>, DataError> {
   return requireEntity<Task>(filePath(id), id)
 }
 
+/**
+ * Updates an existing task with a partial patch.
+ * Sets the `updated` timestamp on every patch.
+ * @param id - Identifier of the task to update.
+ * @param patch - Fields to update; unspecified fields are preserved.
+ * @param body - Optional replacement markdown body.
+ * @returns Effect resolving to the updated Task, or failing with DataError.
+ */
 export function updateTask(
   id: string,
   patch: Partial<Task>,
@@ -34,6 +51,12 @@ export function updateTask(
   })
 }
 
+/**
+ * Appends a time log entry to a task's time_logs array.
+ * @param id - Task identifier.
+ * @param entry - Time log entry to append (date, hours, optional notes).
+ * @returns Effect resolving to the updated Task, or failing with DataError.
+ */
 export function appendTimeLog(
   id: string,
   entry: TimeLogEntry
@@ -51,6 +74,12 @@ export function appendTimeLog(
   })
 }
 
+/**
+ * Creates a new task.
+ * @param data - Task fields to set.
+ * @param body - Optional initial markdown body.
+ * @returns Effect resolving to the created Task, or failing with DataError.
+ */
 export function createTask(
   data: Omit<Task, 'id' | 'type' | 'created' | 'updated'>,
   body = ''
@@ -61,10 +90,20 @@ export function createTask(
   return Effect.map(writeEntity(filePath(id), task as unknown as Record<string, unknown>, body), () => task)
 }
 
+/**
+ * Calculates the total hours logged across all time_logs entries for a task.
+ * @param task - The task whose time logs to sum.
+ * @returns Total hours as a number; returns 0 if no time logs exist.
+ */
 export function totalHours(task: Task): number {
   return (task.time_logs ?? []).reduce((sum, e) => sum + e.hours, 0)
 }
 
+/**
+ * Calculates hours logged on a task since the most recent Monday (ISO week start).
+ * @param task - The task whose time logs to filter.
+ * @returns Hours logged in the current calendar week.
+ */
 export function hoursThisWeek(task: Task): number {
   const monday = getMonday()
   return (task.time_logs ?? [])

@@ -9,6 +9,10 @@ import type { EntityWithBody, Organization } from './types.js'
 const dir = () => dataPath('CRM', 'organizations')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
+/**
+ * Lists all organizations from the SQLite index.
+ * @returns Effect resolving to an array of Organization objects, or failing with DataError.
+ */
 export function listOrganizations(): Effect.Effect<Organization[], DataError> {
   return Effect.try({
     try: () => listByType<Organization>('organization'),
@@ -16,10 +20,23 @@ export function listOrganizations(): Effect.Effect<Organization[], DataError> {
   })
 }
 
+/**
+ * Retrieves a single organization by ID, including its markdown body.
+ * @param id - Organization identifier, e.g. "org-acme-corp".
+ * @returns Effect resolving to the organization data and markdown body, or failing with DataError.
+ */
 export function getOrganization(id: string): Effect.Effect<EntityWithBody<Organization>, DataError> {
   return requireEntity<Organization>(filePath(id), id)
 }
 
+/**
+ * Updates an existing organization with the provided partial data.
+ * Preserves fields not included in the patch. Replaces the markdown body if provided.
+ * @param id - Organization identifier to update.
+ * @param patch - Partial Organization fields to apply.
+ * @param body - Optional replacement markdown body; keeps existing body if omitted.
+ * @returns Effect resolving to the updated Organization, or failing with DataError.
+ */
 export function updateOrganization(
   id: string,
   patch: Partial<Organization>,
@@ -34,6 +51,13 @@ export function updateOrganization(
   })
 }
 
+/**
+ * Creates a new organization. The ID is auto-generated from the organization name
+ * (lowercased, spaces converted to dashes, non-alphanumeric characters stripped).
+ * @param data - Organization fields excluding id, type, and created (auto-assigned).
+ * @param body - Optional initial markdown body content.
+ * @returns Effect resolving to the created Organization, or failing with DataError if the ID already exists.
+ */
 export function createOrganization(
   data: Omit<Organization, 'id' | 'type' | 'created'>,
   body = ''

@@ -9,6 +9,10 @@ import type { Expense, EntityWithBody } from './types.js'
 const dir = () => dataPath('ERP', 'expenses')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
+/**
+ * Lists all expenses from the SQLite index.
+ * @returns Effect resolving to Expense[], or failing with DataError.
+ */
 export function listExpenses(): Effect.Effect<Expense[], DataError> {
   return Effect.try({
     try: () => listByType<Expense>('expense'),
@@ -17,10 +21,22 @@ export function listExpenses(): Effect.Effect<Expense[], DataError> {
 }
 
 
+/**
+ * Retrieves a single expense by ID with its markdown body.
+ * @param id - Expense identifier.
+ * @returns Effect resolving to entity data and markdown body, or failing with DataError.
+ */
 export function getExpense(id: string): Effect.Effect<EntityWithBody<Expense>, DataError> {
   return requireEntity<Expense>(filePath(id), id)
 }
 
+/**
+ * Updates an existing expense with a partial patch.
+ * @param id - Expense identifier.
+ * @param patch - Fields to update; unspecified fields are preserved.
+ * @param body - Optional replacement markdown body.
+ * @returns Effect resolving to the updated Expense, or failing with DataError.
+ */
 export function updateExpense(
   id: string,
   patch: Partial<Expense>,
@@ -35,6 +51,12 @@ export function updateExpense(
   })
 }
 
+/**
+ * Creates a new expense.
+ * @param data - Expense fields to set.
+ * @param body - Optional initial markdown body.
+ * @returns Effect resolving to the created Expense, or failing with DataError.
+ */
 export function createExpense(
   data: Omit<Expense, 'id' | 'type' | 'created' | 'updated'>,
   body = ''

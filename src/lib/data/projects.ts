@@ -8,6 +8,10 @@ import type { EntityWithBody, Project } from './types.js'
 const dir = () => dataPath('PM', 'projects')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
+/**
+ * Lists all projects from the SQLite index.
+ * @returns Effect resolving to Project[], or failing with DataError.
+ */
 export function listProjects(): Effect.Effect<Project[], DataError> {
   return Effect.try({
     try: () => listByType<Project>('project'),
@@ -16,10 +20,22 @@ export function listProjects(): Effect.Effect<Project[], DataError> {
 }
 
 
+/**
+ * Retrieves a single project by ID with markdown body.
+ * @param id - Project identifier.
+ * @returns Effect resolving to project data + body, or failing with DataError.
+ */
 export function getProject(id: string): Effect.Effect<EntityWithBody<Project>, DataError> {
   return requireEntity<Project>(filePath(id), id)
 }
 
+/**
+ * Updates an existing project with a partial patch.
+ * @param id - Identifier of the project to update.
+ * @param patch - Fields to update; unspecified fields are preserved.
+ * @param body - Optional replacement markdown body.
+ * @returns Effect resolving to the updated Project, or failing with DataError.
+ */
 export function updateProject(
   id: string,
   patch: Partial<Project>,
@@ -34,6 +50,12 @@ export function updateProject(
   })
 }
 
+/**
+ * Creates a new project.
+ * @param data - Project fields to set.
+ * @param body - Optional initial markdown body.
+ * @returns Effect resolving to the created Project, or failing with DataError.
+ */
 export function createProject(
   data: Omit<Project, 'id' | 'type' | 'created' | 'updated'>,
   body = ''

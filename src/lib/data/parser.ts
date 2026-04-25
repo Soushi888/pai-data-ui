@@ -8,6 +8,13 @@ import type { EntityWithBody } from "./types.js";
 export const DATA_ROOT =
   process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.claude/PAI/USER/DATA`;
 
+type WriteHook = (filePath: string, data: Record<string, unknown>, body: string) => void
+let _writeHook: WriteHook | null = null
+
+export function registerWriteHook(hook: WriteHook): void {
+  _writeHook = hook
+}
+
 export function dataPath(...segments: string[]): string {
   return join(DATA_ROOT, ...segments);
 }
@@ -30,10 +37,16 @@ export function writeEntity<T extends Record<string, unknown>>(
   data: T,
   body: string,
 ): Effect.Effect<void, WriteError> {
-  return Effect.tryPromise({
-    try: () => writeFile(filePath, matter.stringify(body || "", data), "utf8"),
-    catch: (e) => new WriteError({ file: filePath, cause: e }),
-  });
+  return Effect.tap(
+    Effect.tryPromise({
+      try: () => writeFile(filePath, matter.stringify(body || "", data), "utf8"),
+      catch: (e) => new WriteError({ file: filePath, cause: e }),
+    }),
+    () => {
+      try { _writeHook?.(filePath, data as Record<string, unknown>, body) } catch { /* best effort */ }
+      return Effect.void
+    }
+  )
 }
 
 export function listDir(dir: string): Effect.Effect<string[], ParseError> {

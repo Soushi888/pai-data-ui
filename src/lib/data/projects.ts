@@ -1,19 +1,20 @@
 import { Effect } from 'effect'
 import type { DataError } from './errors.js'
-import { dataPath, listDir, readEntity, requireEntity, writeEntity } from './parser.js'
+import { ParseError } from './errors.js'
+import { dataPath, requireEntity, writeEntity } from './parser.js'
+import { listByType } from '$lib/server/index-db.js'
 import type { EntityWithBody, Project } from './types.js'
 
 const dir = () => dataPath('PM', 'projects')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
 export function listProjects(): Effect.Effect<Project[], DataError> {
-  return Effect.flatMap(listDir(dir()), (paths) =>
-    Effect.all(
-      paths.map((p) => Effect.map(readEntity<Project>(p), (e) => e.data)),
-      { concurrency: 10 }
-    )
-  )
+  return Effect.try({
+    try: () => listByType<Project>('project'),
+    catch: (e) => new ParseError({ file: dir(), cause: e }),
+  })
 }
+
 
 export function getProject(id: string): Effect.Effect<EntityWithBody<Project>, DataError> {
   return requireEntity<Project>(filePath(id), id)

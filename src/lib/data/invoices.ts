@@ -3,20 +3,21 @@ import { join } from 'node:path'
 import PDFDocument from 'pdfkit'
 import { Effect } from 'effect'
 import type { DataError } from './errors.js'
-import { DATA_ROOT, dataPath, listDir, readEntity, requireEntity, writeEntity } from './parser.js'
+import { DATA_ROOT, dataPath, requireEntity, writeEntity } from './parser.js'
+import { listByType } from '$lib/server/index-db.js'
+import { ParseError } from './errors.js'
 import type { EntityWithBody, Invoice } from './types.js'
 
 const dir = () => dataPath('ERP', 'invoices')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
 export function listInvoices(): Effect.Effect<Invoice[], DataError> {
-  return Effect.flatMap(listDir(dir()), (paths) =>
-    Effect.all(
-      paths.map((p) => Effect.map(readEntity<Invoice>(p), (e) => e.data)),
-      { concurrency: 10 }
-    )
-  )
+  return Effect.try({
+    try: () => listByType<Invoice>('invoice'),
+    catch: (e) => new ParseError({ file: dir(), cause: e }),
+  })
 }
+
 
 export function getInvoice(id: string): Effect.Effect<EntityWithBody<Invoice>, DataError> {
   return requireEntity<Invoice>(filePath(id), id)

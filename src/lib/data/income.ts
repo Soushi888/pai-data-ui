@@ -1,20 +1,19 @@
 import { existsSync } from 'node:fs'
 import { Effect } from 'effect'
 import type { DataError } from './errors.js'
-import { FileNotFoundError } from './errors.js'
-import { dataPath, listDir, readEntity, requireEntity, writeEntity } from './parser.js'
+import { FileNotFoundError, ParseError } from './errors.js'
+import { dataPath, requireEntity, writeEntity } from './parser.js'
+import { listByType } from '$lib/server/index-db.js'
 import type { AdHocIncome, EntityWithBody } from './types.js'
 
 const dir = () => dataPath('ERP', 'income')
 const filePath = (id: string) => `${dir()}/${id}.md`
 
 export function listIncome(): Effect.Effect<AdHocIncome[], DataError> {
-  return Effect.flatMap(listDir(dir()), (paths) =>
-    Effect.all(
-      paths.map((p) => Effect.map(readEntity<AdHocIncome>(p), (e) => e.data)),
-      { concurrency: 10 }
-    )
-  )
+  return Effect.try({
+    try: () => listByType<AdHocIncome>('income'),
+    catch: (e) => new ParseError({ file: dir(), cause: e }),
+  })
 }
 
 export function getIncome(id: string): Effect.Effect<EntityWithBody<AdHocIncome>, DataError> {

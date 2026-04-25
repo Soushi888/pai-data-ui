@@ -1,7 +1,16 @@
 <script lang="ts">
+  /**
+   * Renders markdown content as styled HTML using the marked library.
+   * @component
+   */
   import { marked } from 'marked'
 
-  let { body }: { body: string } = $props()
+  interface Props {
+    /** Raw markdown text to render. */
+    body: string;
+  }
+
+  let { body }: Props = $props()
 
   marked.use({ gfm: true })
 

@@ -1,5 +1,22 @@
 <script lang="ts">
+  /**
+   * Kanban card for a task with priority dot, status, and drag support.
+   * @component
+   */
   import type { Task } from '$lib/data/types.js'
+
+  interface Props {
+    /** Task data to display. */
+    task: Task;
+    /** ID of the task currently being dragged, or null. */
+    dragging: string | null;
+    /** Map of project ID to project name for the project label. */
+    projectNames: Record<string, string>;
+    /** Handler called when drag starts on this card. */
+    ondragstart: () => void;
+    /** Handler called when drag ends on this card. */
+    ondragend: () => void;
+  }
 
   let {
     task,
@@ -7,13 +24,7 @@
     projectNames,
     ondragstart,
     ondragend
-  }: {
-    task: Task
-    dragging: string | null
-    projectNames: Record<string, string>
-    ondragstart: () => void
-    ondragend: () => void
-  } = $props()
+  }: Props = $props()
 
   const priorityDot: Record<string, string> = {
     critical: 'bg-red-500',

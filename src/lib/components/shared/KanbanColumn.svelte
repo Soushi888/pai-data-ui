@@ -1,5 +1,26 @@
 <script lang="ts">
+  /**
+   * Drag-and-drop kanban column with header, item count, and drop zone.
+   * @component
+   */
   import type { Snippet } from 'svelte'
+
+  interface Props {
+    /** Column header label. */
+    label: string;
+    /** Badge count displayed next to the header. */
+    count: number;
+    /** Whether a card is currently dragged over this column. */
+    isHovered: boolean;
+    /** Handler called when a dragged card is dropped onto the column. */
+    ondrop: () => void;
+    /** Handler called when a drag enters the column's drop zone. */
+    ondragenter: () => void;
+    /** Handler called when a drag leaves the column's drop zone. */
+    ondragleave: () => void;
+    /** Slot content rendered inside the column body. */
+    children: Snippet;
+  }
 
   let {
     label,
@@ -9,15 +30,7 @@
     ondragenter,
     ondragleave,
     children
-  }: {
-    label: string
-    count: number
-    isHovered: boolean
-    ondrop: () => void
-    ondragenter: () => void
-    ondragleave: () => void
-    children: Snippet
-  } = $props()
+  }: Props = $props()
 </script>
 
 <div

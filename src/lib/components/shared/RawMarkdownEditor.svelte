@@ -1,14 +1,27 @@
 <script lang="ts">
+  /**
+   * Full-page CodeMirror editor with YAML frontmatter and markdown language support.
+   * @component
+   */
   import { onMount, onDestroy } from 'svelte'
   import { enhance } from '$app/forms'
   import type { EditorView } from 'codemirror'
   import type { DecorationSet } from '@codemirror/view'
 
+  interface Props {
+    /** Initial file content to populate the editor. */
+    content: string;
+    /** URL the back button navigates to. */
+    backUrl: string;
+    /** Heading displayed above the editor. */
+    title: string;
+  }
+
   let {
     content,
     backUrl,
     title
-  }: { content: string; backUrl: string; title: string } = $props()
+  }: Props = $props()
 
   let value = $state(content)
   let dirty = $state(false)

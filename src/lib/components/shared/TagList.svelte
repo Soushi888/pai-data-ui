@@ -1,5 +1,16 @@
 <script lang="ts">
-  let { tags, clickable = true }: { tags: string[]; clickable?: boolean } = $props()
+  /**
+   * Displays a list of tag labels as inline chips.
+   * @component
+   */
+  interface Props {
+    /** Array of tag strings to display. */
+    tags: string[];
+    /** Whether tags render as links. Defaults to true. */
+    clickable?: boolean;
+  }
+
+  let { tags, clickable = true }: Props = $props()
 </script>
 
 {#if tags?.length}

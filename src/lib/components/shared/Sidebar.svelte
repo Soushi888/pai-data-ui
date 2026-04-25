@@ -1,4 +1,9 @@
 <script lang="ts">
+  /**
+   * Main navigation sidebar with section links and global search.
+   * @component
+   */
+
     import { page } from "$app/stores";
 
     interface Counts {
@@ -12,7 +17,12 @@
         income: number;
     }
 
-    let { counts }: { counts: Counts } = $props();
+    interface Props {
+        /** Entity counts shown next to each nav item. */
+        counts: Counts;
+    }
+
+    let { counts }: Props = $props();
 
     const navSections = [
         {

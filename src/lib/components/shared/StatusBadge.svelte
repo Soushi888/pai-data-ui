@@ -1,4 +1,13 @@
 <script lang="ts">
+  /**
+   * Renders a small colored inline badge based on entity status value.
+   * @component
+   */
+  interface Props {
+    /** Status value that drives color mapping (active, done, paid, draft, overdue, etc.). */
+    status: string;
+  }
+
   const colorMap: Record<string, string> = {
     active: 'text-green-300 bg-green-900/50',
     inactive: 'text-gray-400 bg-gray-800',
@@ -23,7 +32,7 @@
     planned: 'text-blue-300 bg-blue-900/50',
   }
 
-  let { status }: { status: string } = $props()
+  let { status }: Props = $props()
   const cls = $derived(colorMap[status] ?? 'text-gray-400 bg-gray-800')
 </script>
 

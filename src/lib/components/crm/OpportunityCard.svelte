@@ -1,18 +1,28 @@
 <script lang="ts">
+  /**
+   * Kanban card representing a CRM opportunity.
+   * @component
+   */
   import TagList from '$lib/components/shared/TagList.svelte'
   import type { Opportunity } from '$lib/data/types.js'
+
+  interface Props {
+    /** The opportunity data to display. */
+    opp: Opportunity;
+    /** ID of the opportunity currently being dragged, or null. */
+    dragging: string | null;
+    /** Handler called when drag starts on this card. */
+    ondragstart: () => void;
+    /** Handler called when drag ends on this card. */
+    ondragend: () => void;
+  }
 
   let {
     opp,
     dragging,
     ondragstart,
     ondragend
-  }: {
-    opp: Opportunity
-    dragging: string | null
-    ondragstart: () => void
-    ondragend: () => void
-  } = $props()
+  }: Props = $props()
 
   const cad = (n?: number) =>
     n != null ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(n) : null

@@ -1,5 +1,14 @@
 <script lang="ts">
-  let { tags = $bindable([]) }: { tags: string[] } = $props()
+  /**
+   * Multi-value tag input; users add tags with Enter or comma, remove with X or backspace.
+   * @component
+   */
+  interface Props {
+    /** Bindable array of current tag strings. */
+    tags?: string[];
+  }
+
+  let { tags = $bindable([]) }: Props = $props()
 
   let inputValue = $state('')
   let inputEl: HTMLInputElement

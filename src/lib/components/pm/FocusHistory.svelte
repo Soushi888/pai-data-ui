@@ -1,17 +1,27 @@
 <script lang="ts">
+  /**
+   * Read-only timeline view of historical focus lists (daily and weekly).
+   * @component
+   */
   import type { FocusDaily, FocusWeek } from '$lib/data/types.js'
+
+  export type Props = {
+    /** List of past daily focus entries to display. */
+    dailyHistory: FocusDaily[];
+    /** List of past weekly focus entries to display. */
+    weekHistory: FocusWeek[];
+    /** ID of the currently active daily list (highlighted in the sidebar). */
+    currentDailyId: string;
+    /** ID of the currently active weekly list (highlighted in the sidebar). */
+    currentWeekId: string;
+  }
 
   let {
     dailyHistory,
     weekHistory,
     currentDailyId,
     currentWeekId,
-  }: {
-    dailyHistory: FocusDaily[]
-    weekHistory: FocusWeek[]
-    currentDailyId: string
-    currentWeekId: string
-  } = $props()
+  }: Props = $props()
 </script>
 
 <aside class="flex flex-col gap-4">

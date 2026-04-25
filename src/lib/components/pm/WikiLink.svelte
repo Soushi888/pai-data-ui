@@ -1,5 +1,14 @@
 <script lang="ts">
-  let { ref }: { ref?: string } = $props()
+  /**
+   * Renders an internal wiki-style link to a PAI entity (task, project, or contact).
+   * @component
+   */
+  interface Props {
+    /** Entity reference string (e.g. "task-123", "proj-456", "contact-789"). Optional. */
+    ref?: string;
+  }
+
+  let { ref }: Props = $props()
 
   const href = $derived(() => {
     if (!ref) return null

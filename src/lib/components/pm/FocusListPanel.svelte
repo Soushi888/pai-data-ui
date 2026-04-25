@@ -1,8 +1,25 @@
 <script lang="ts">
+  /**
+   * Panel displaying a focus list (daily or weekly) with item management.
+   * @component
+   */
   import { invalidateAll } from '$app/navigation'
   import FocusItem from './FocusItem.svelte'
   import PrepareNextModal from './PrepareNextModal.svelte'
   import type { FocusList, FocusItem as FocusItemType } from '$lib/data/types.js'
+
+  export type Props = {
+    /** The current focus list, or null if none exists yet. */
+    list: FocusList | null;
+    /** Unique identifier of the focus list used for API calls. */
+    listId: string;
+    /** Whether this is a daily or weekly focus list. */
+    type: 'focus-daily' | 'focus-week';
+    /** Human-readable label displayed in the panel header. */
+    label: string;
+    /** Optional callback invoked after a new list is created. */
+    onCreated?: () => void;
+  }
 
   let {
     list,
@@ -10,13 +27,7 @@
     type,
     label,
     onCreated,
-  }: {
-    list: FocusList | null
-    listId: string
-    type: 'focus-daily' | 'focus-week'
-    label: string
-    onCreated?: () => void
-  } = $props()
+  }: Props = $props()
 
   let newItemText = $state('')
   let showPrepare = $state(false)
@@ -62,7 +73,7 @@
     if (!list) return
     const updated = localItems.map((i) => i.id === itemId ? { ...i, done: !i.done } : i)
     localItems = updated
-    await fetch(`/api/focus/${list.id}`, {
+    await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: updated }),
@@ -78,7 +89,7 @@
       ...localItems,
       { id: `item-${localItems.length + 1}`, text: newItemText.trim(), done: false },
     ]
-    await fetch(`/api/focus/${list.id}`, {
+    await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: updated }),
@@ -127,7 +138,7 @@
     localItems = items
     dragEnd()
 
-    const res = await fetch(`/api/focus/${list.id}`, {
+    const res = await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items }),
@@ -146,7 +157,7 @@
     editingId = null
     const updated = localItems.map((i) => i.id === id ? { ...i, text } : i)
     localItems = updated
-    await fetch(`/api/focus/${list.id}`, {
+    await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: updated }),

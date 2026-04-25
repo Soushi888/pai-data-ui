@@ -1,14 +1,22 @@
 <script lang="ts">
+  /**
+   * Modal for preparing the next focus period by reviewing unfinished items.
+   * @component
+   */
   import { invalidateAll } from '$app/navigation'
   import type { FocusItem, FocusList } from '$lib/data/types.js'
+
+  export type Props = {
+    /** The current focus list whose unfinished items will be reviewed. */
+    list: FocusList;
+    /** Callback to close the modal. */
+    onClose: () => void;
+  }
 
   let {
     list,
     onClose,
-  }: {
-    list: FocusList
-    onClose: () => void
-  } = $props()
+  }: Props = $props()
 
   type Decision = 'carry' | 'drop' | 'archive'
   const unchecked = $derived(list.items.filter((i) => !i.done))
@@ -36,7 +44,7 @@
       body: JSON.stringify({ items: updatedItems, status: 'archived' }),
     })
 
-    if (toCarry.length > 0 || true) {
+    if (toCarry.length > 0) {
       const carriedItems: FocusItem[] = toCarry.map((item, idx) => ({
         id: `item-${idx + 1}`,
         text: item.text,

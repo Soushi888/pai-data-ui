@@ -26,3 +26,6 @@ vite.config.ts.timestamp-*
 *.local.*
 .local
 .worktrees/
+
+# Compiled binary
+/pai-data-ui

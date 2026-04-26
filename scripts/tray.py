@@ -2,6 +2,11 @@
 """PAI Data UI system tray manager."""
 
 import os
+
+# Must be set before importing pystray so it picks up the correct backend.
+# _xorg (default on X11) doesn't render context menus on Cinnamon.
+os.environ.setdefault("PYSTRAY_BACKEND", "gtk")
+
 import signal
 import subprocess
 import sys
@@ -78,10 +83,12 @@ def main() -> None:
     start_server()
 
     menu = pystray.Menu(
-        pystray.MenuItem("Open in Browser", open_browser, default=True),
-        pystray.MenuItem("Restart Server", restart_server),
+        pystray.MenuItem("PAI Data UI", None, enabled=False),
         pystray.Menu.SEPARATOR,
+        pystray.MenuItem("Open", open_browser, default=True),
         pystray.MenuItem("Quit", quit_app),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("Restart Server", restart_server),
     )
 
     icon = pystray.Icon("pai-data-ui", make_icon(), "PAI Data UI", menu)

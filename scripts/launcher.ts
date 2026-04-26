@@ -10,7 +10,11 @@ const PROJECT_DIR = import.meta.dir.startsWith("/$bunfs/")
   : resolve(import.meta.dir, "..");
 const SERVER_ENTRY = resolve(PROJECT_DIR, "build", "index.js");
 
-const proc = spawn(["bun", SERVER_ENTRY], {
+// adapter-node output uses better-sqlite3 which requires Node.js (not Bun).
+// NODE_PATH is injected by the systemd service (via install.sh) to survive systemd's minimal PATH.
+const NODE = process.env.NODE_PATH ?? "node";
+
+const proc = spawn([NODE, SERVER_ENTRY], {
   env: { ...process.env, PORT },
   stdout: "inherit",
   stderr: "inherit",

@@ -5,6 +5,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BINARY="$PROJECT_DIR/pai-data-ui"
 TRAY_SCRIPT="$PROJECT_DIR/scripts/tray.py"
 UV="$(which uv 2>/dev/null || echo "$HOME/.local/bin/uv")"
+NODE_BIN="$(which node 2>/dev/null || echo "node")"
 SERVICE_NAME="pai-data-ui"
 SERVICE_DIR="$HOME/.config/systemd/user"
 DESKTOP_DIR="$HOME/.local/share/applications"
@@ -23,7 +24,7 @@ fi
 
 # Install Python deps via uv (cached — fast on repeat runs)
 echo "Fetching Python dependencies..."
-"$UV" run --with pystray --with pillow python3 -c "import pystray, PIL; print('  pystray OK')"
+PYTHONPATH=/usr/lib/python3/dist-packages "$UV" run --with pystray --with pillow python3 -c "import pystray, PIL; print('  pystray OK')"
 
 # Systemd user service
 mkdir -p "$SERVICE_DIR"
@@ -37,6 +38,9 @@ PartOf=graphical-session.target
 Type=simple
 WorkingDirectory=$PROJECT_DIR
 Environment=PORT=4173
+Environment=NODE_PATH=$NODE_BIN
+Environment=PYSTRAY_BACKEND=gtk
+Environment=PYTHONPATH=/usr/lib/python3/dist-packages
 ExecStart=$UV run --with pystray --with pillow $TRAY_SCRIPT
 Restart=on-failure
 RestartSec=3
@@ -59,7 +63,7 @@ Version=1.0
 Type=Application
 Name=PAI Data UI
 Comment=PAI Data Layer UI
-Exec=$UV run --with pystray --with pillow $TRAY_SCRIPT
+Exec=$PROJECT_DIR/scripts/start.sh
 Icon=network-server
 Terminal=false
 Categories=Utility;

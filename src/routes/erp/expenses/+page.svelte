@@ -19,6 +19,16 @@
     })
   )
 
+  const recurring = $derived(filtered.filter((e) => e.recurrence === 'monthly' || e.recurrence === 'annual'))
+  const oneTime   = $derived(filtered.filter((e) => e.recurrence === 'one-time'))
+
+  const monthlyTotal = $derived(
+    recurring.reduce((sum, e) => sum + (e.recurrence === 'annual' ? e.amount_cad / 12 : e.amount_cad), 0)
+  )
+  const annualTotal = $derived(
+    recurring.reduce((sum, e) => sum + (e.recurrence === 'monthly' ? e.amount_cad * 12 : e.amount_cad), 0)
+  )
+
   function nextDueLabel(e: typeof data.expenses[0]): string {
     if (e.recurrence === 'monthly') {
       return e.billing_day ? `Day ${e.billing_day}` : ''
@@ -114,6 +124,7 @@
       <select name="currency_original" class="bg-gray-800 text-gray-200 text-sm rounded px-3 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500">
         <option value="CAD">CAD</option>
         <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
       </select>
 
       <input name="billing_day" type="number" min="1" max="31" placeholder="Billing day (monthly)" class="bg-gray-800 text-gray-200 text-sm rounded px-3 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500" />
@@ -148,32 +159,80 @@
     </div>
   </div>
 
-  <table class="w-full text-sm">
+  <!-- Recurring section -->
+  <div class="flex items-center gap-3 mb-2">
+    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Recurring</span>
+    <div class="flex-1 h-px bg-gray-800"></div>
+    <span class="text-xs text-gray-500">
+      <span class="text-gray-300">{cad(monthlyTotal)}</span>/mo
+      &middot;
+      <span class="text-gray-300">{cad(annualTotal)}</span>/yr
+    </span>
+  </div>
+
+  <table class="w-full text-sm mb-8">
     <thead>
       <tr class="text-gray-500 text-left">
         <th class="pb-2 font-normal">Name</th>
         <th class="pb-2 font-normal">Category</th>
-        <th class="pb-2 font-normal">Recurrence</th>
+        <th class="pb-2 font-normal">Cycle</th>
         <th class="pb-2 font-normal text-right">Amount</th>
-        <th class="pb-2 font-normal">Next Due / Day</th>
+        <th class="pb-2 font-normal">Billing</th>
         <th class="pb-2 font-normal">Status</th>
       </tr>
     </thead>
     <tbody>
-      {#each filtered as exp}
+      {#each recurring as exp}
         <tr
           class="border-t border-gray-800 hover:bg-gray-800/50 cursor-pointer"
           onclick={() => window.location.href = `/erp/expenses/${exp.id}`}
         >
           <td class="py-2.5 text-blue-400 font-medium">{exp.name}</td>
           <td class="py-2.5 text-gray-400">{exp.category}</td>
-          <td class="py-2.5 text-gray-400">{exp.recurrence}</td>
+          <td class="py-2.5">
+            <span class="px-2 py-0.5 rounded text-xs {exp.recurrence === 'monthly' ? 'bg-blue-900/50 text-blue-300' : 'bg-yellow-900/50 text-yellow-300'}">{exp.recurrence}</span>
+          </td>
           <td class="py-2.5 text-right tabular-nums text-gray-200">{amountLabel(exp)}</td>
           <td class="py-2.5 text-gray-500 tabular-nums">{nextDueLabel(exp)}</td>
           <td class="py-2.5"><StatusBadge status={exp.status} /></td>
         </tr>
       {:else}
-        <tr><td colspan="6" class="py-8 text-center text-gray-500">No expenses.</td></tr>
+        <tr><td colspan="6" class="py-8 text-center text-gray-500">No recurring expenses.</td></tr>
+      {/each}
+    </tbody>
+  </table>
+
+  <!-- Variable & One-time section -->
+  <div class="flex items-center gap-3 mb-2">
+    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Variable & One-time</span>
+    <div class="flex-1 h-px bg-gray-800"></div>
+    <span class="text-xs text-gray-500">{oneTime.length} item{oneTime.length !== 1 ? 's' : ''}</span>
+  </div>
+
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-gray-500 text-left">
+        <th class="pb-2 font-normal">Name</th>
+        <th class="pb-2 font-normal">Category</th>
+        <th class="pb-2 font-normal text-right">Amount</th>
+        <th class="pb-2 font-normal">Next Due</th>
+        <th class="pb-2 font-normal">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each oneTime as exp}
+        <tr
+          class="border-t border-gray-800 hover:bg-gray-800/50 cursor-pointer"
+          onclick={() => window.location.href = `/erp/expenses/${exp.id}`}
+        >
+          <td class="py-2.5 text-blue-400 font-medium">{exp.name}</td>
+          <td class="py-2.5 text-gray-400">{exp.category}</td>
+          <td class="py-2.5 text-right tabular-nums text-gray-200">{amountLabel(exp)}</td>
+          <td class="py-2.5 text-gray-500 tabular-nums">{exp.next_due ?? ''}</td>
+          <td class="py-2.5"><StatusBadge status={exp.status} /></td>
+        </tr>
+      {:else}
+        <tr><td colspan="5" class="py-8 text-center text-gray-500">No one-time expenses.</td></tr>
       {/each}
     </tbody>
   </table>

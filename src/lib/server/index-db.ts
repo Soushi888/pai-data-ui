@@ -68,6 +68,8 @@ function initSchema(db: BetterSqlite3.Database): void {
     CREATE INDEX IF NOT EXISTS idx_sync_errors_path ON sync_errors(file_path);
   `)
 
+  initVfViews(db)
+
   const existing = db
     .prepare("SELECT name FROM sqlite_master WHERE type='trigger'")
     .all() as { name: string }[]
@@ -103,6 +105,76 @@ function initSchema(db: BetterSqlite3.Database): void {
       END;
     `)
   }
+}
+
+function initVfViews(db: BetterSqlite3.Database): void {
+  db.exec(`
+    DROP VIEW IF EXISTS vf_economic_events;
+    CREATE VIEW vf_economic_events AS
+      SELECT
+        id, type, domain, file_path,
+        json_extract(data, '$.vf_action')                        AS action,
+        json_extract(data, '$.vf_provider')                      AS provider,
+        json_extract(data, '$.vf_receiver')                      AS receiver,
+        json_extract(data, '$.vf_input_of')                      AS input_of,
+        json_extract(data, '$.vf_output_of')                     AS output_of,
+        json_extract(data, '$.vf_resource_conforms_to')          AS resource_spec,
+        json_extract(data, '$.vf_resource_quantity.numericValue') AS qty_value,
+        json_extract(data, '$.vf_resource_quantity.unit')         AS qty_unit,
+        json_extract(data, '$.vf_has_point_in_time')              AS point_in_time,
+        updated
+      FROM entities
+      WHERE type IN ('task', 'expense', 'income');
+
+    DROP VIEW IF EXISTS vf_process_flows;
+    CREATE VIEW vf_process_flows AS
+      SELECT
+        p.id                            AS process_id,
+        p.domain                        AS process_domain,
+        json_extract(p.data, '$.title') AS process_title,
+        e.id                            AS event_id,
+        e.action,
+        e.provider,
+        e.receiver,
+        e.qty_value,
+        e.qty_unit,
+        e.resource_spec,
+        e.point_in_time,
+        CASE WHEN e.input_of = p.id THEN 'input' ELSE 'output' END AS direction
+      FROM entities p
+      JOIN vf_economic_events e ON e.input_of = p.id OR e.output_of = p.id
+      WHERE p.type = 'project';
+
+    DROP VIEW IF EXISTS vf_agent_contributions;
+    CREATE VIEW vf_agent_contributions AS
+      SELECT
+        provider       AS agent_id,
+        resource_spec,
+        qty_unit,
+        SUM(qty_value) AS total_qty,
+        COUNT(*)       AS event_count
+      FROM vf_economic_events
+      WHERE action IN ('work', 'deliver-service', 'produce', 'raise', 'cite')
+        AND provider IS NOT NULL
+      GROUP BY provider, resource_spec, qty_unit;
+
+    DROP VIEW IF EXISTS vf_claim_status;
+    CREATE VIEW vf_claim_status AS
+      SELECT
+        id,
+        json_extract(data, '$.title')                             AS title,
+        json_extract(data, '$.vf_resource_quantity.numericValue') AS claimed_amount,
+        json_extract(data, '$.vf_resource_quantity.unit')          AS currency,
+        json_extract(data, '$.client')                            AS client,
+        json_extract(data, '$.vf_settled_by')                     AS settled_by,
+        CASE
+          WHEN json_array_length(json_extract(data, '$.vf_settled_by')) > 0
+          THEN 'settled'
+          ELSE 'outstanding'
+        END AS settlement_status
+      FROM entities
+      WHERE type = 'invoice';
+  `)
 }
 
 /**

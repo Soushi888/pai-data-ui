@@ -265,7 +265,7 @@ export interface Expense {
   /** Cost in the original billing currency. */
   amount_original: number;
   /** Currency of the original billing amount. */
-  currency_original: 'CAD' | 'USD';
+  currency_original: 'CAD' | 'USD' | 'EUR';
   /** Day of the month on which recurring charges are billed (1–31), or null. */
   billing_day?: number | null;
   /** ISO date (YYYY-MM-DD) the next payment is due, or null. */
@@ -301,7 +301,7 @@ export interface AdHocIncome {
   /** Amount in the original currency. */
   amount_original: number;
   /** Currency of the original amount. */
-  currency_original: 'CAD' | 'USD';
+  currency_original: 'CAD' | 'USD' | 'EUR';
   /** ISO date (YYYY-MM-DD) the income was received. */
   date: string;
   /** Categorization labels. */
@@ -327,7 +327,7 @@ export interface Payment {
   /** Amount in the original billing currency. */
   amount_original: number;
   /** Currency of the original payment. */
-  currency_original: 'CAD' | 'USD';
+  currency_original: 'CAD' | 'USD' | 'EUR';
   /** Optional free-text notes about this payment. */
   notes?: string | null;
   /** Categorization labels. */

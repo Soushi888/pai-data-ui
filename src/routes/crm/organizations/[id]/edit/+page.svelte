@@ -7,4 +7,5 @@
   content={data.content}
   backUrl="/crm/organizations/{data.id}"
   title={data.id}
+  saveUrl="/api/organizations/{data.id}/raw"
 />

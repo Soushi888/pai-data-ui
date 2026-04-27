@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
 
   let { data } = $props()
@@ -7,6 +8,7 @@
     new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(n)
 
   let showPaymentForm = $state(false)
+  let savingPayment = $state(false)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -14,6 +16,34 @@
     const d = actual - expected
     if (Math.abs(d) < 0.01) return ''
     return d > 0 ? `+${cad(d)}` : cad(d)
+  }
+
+  async function submitPayment(e: Event) {
+    e.preventDefault()
+    savingPayment = true
+    const fd = new FormData(e.target as HTMLFormElement)
+    await fetch(`/api/expenses/${data.expense.id}/payments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: fd.get('date'),
+        amount_cad: parseFloat(fd.get('amount_cad') as string),
+        amount_original: fd.get('amount_original') ? parseFloat(fd.get('amount_original') as string) : undefined,
+        currency_original: fd.get('currency_original') || 'CAD',
+        notes: fd.get('notes') || null
+      })
+    })
+    goto(`/erp/expenses/${data.expense.id}`, { invalidateAll: true })
+  }
+
+  async function cancelExpense() {
+    if (!confirm('Cancel this expense?')) return
+    await fetch(`/api/expenses/${data.expense.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'cancelled' })
+    })
+    goto(`/erp/expenses/${data.expense.id}`, { invalidateAll: true })
   }
 </script>
 
@@ -100,7 +130,7 @@
   </div>
 
   {#if showPaymentForm}
-    <form method="POST" action="?/recordPayment" class="mb-4 p-4 bg-gray-900 rounded border border-gray-700 grid grid-cols-2 gap-3">
+    <form onsubmit={submitPayment} class="mb-4 p-4 bg-gray-900 rounded border border-gray-700 grid grid-cols-2 gap-3">
       <h3 class="col-span-2 text-xs font-medium text-gray-400">Record Payment</h3>
 
       <input name="date" type="date" value={today} required class="bg-gray-800 text-gray-200 text-sm rounded px-3 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500" />
@@ -120,7 +150,7 @@
 
       <div class="col-span-2 flex gap-2 justify-end">
         <button type="button" onclick={() => (showPaymentForm = false)} class="px-3 py-1.5 rounded text-xs bg-gray-700 hover:bg-gray-600 text-gray-300">Cancel</button>
-        <button type="submit" class="px-3 py-1.5 rounded text-xs bg-green-700 hover:bg-green-600 text-white">Record</button>
+        <button type="submit" disabled={savingPayment} class="px-3 py-1.5 rounded text-xs bg-green-700 hover:bg-green-600 text-white disabled:opacity-50">{savingPayment ? 'Recording…' : 'Record'}</button>
       </div>
     </form>
   {/if}
@@ -152,9 +182,7 @@
 
   {#if data.expense.status !== 'cancelled'}
     <div class="mt-8 pt-4 border-t border-gray-800">
-      <form method="POST" action="?/cancel" onsubmit={(e) => { if (!confirm('Cancel this expense?')) e.preventDefault() }}>
-        <button type="submit" class="text-xs text-red-500 hover:text-red-400 transition-colors">Cancel expense</button>
-      </form>
+      <button onclick={cancelExpense} class="text-xs text-red-500 hover:text-red-400 transition-colors">Cancel expense</button>
     </div>
   {/if}
 </div>

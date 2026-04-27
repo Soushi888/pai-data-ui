@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
 
   let { data } = $props()
@@ -31,6 +32,35 @@
     }
     return cad(e.amount_cad)
   }
+
+  let saving = $state(false)
+
+  async function submitCreate(e: Event) {
+    e.preventDefault()
+    saving = true
+    const fd = new FormData(e.target as HTMLFormElement)
+    const recurrence = fd.get('recurrence') as string
+    const res = await fetch('/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: fd.get('name'),
+        category: fd.get('category'),
+        scope: fd.get('scope'),
+        recurrence,
+        status: fd.get('status') || 'active',
+        amount_cad: parseFloat(fd.get('amount_cad') as string),
+        currency_original: fd.get('currency_original') || 'CAD',
+        billing_day: recurrence === 'monthly' && fd.get('billing_day') ? parseInt(fd.get('billing_day') as string) : null,
+        next_due: recurrence !== 'monthly' ? fd.get('next_due') || null : null,
+        start_date: fd.get('start_date') || null,
+        tags: ((fd.get('tags') as string) || '').split(',').map(t => t.trim()).filter(Boolean)
+      })
+    })
+    const json = await res.json()
+    if (json.expense?.id) goto(`/erp/expenses/${json.expense.id}`)
+    saving = false
+  }
 </script>
 
 <div class="p-6 max-w-5xl">
@@ -48,7 +78,7 @@
   </p>
 
   {#if showCreate}
-    <form method="POST" action="?/create" class="mb-6 p-4 bg-gray-900 rounded border border-gray-700 grid grid-cols-2 gap-3">
+    <form onsubmit={submitCreate} class="mb-6 p-4 bg-gray-900 rounded border border-gray-700 grid grid-cols-2 gap-3">
       <h2 class="col-span-2 text-sm font-medium text-gray-300 mb-1">New Expense</h2>
 
       <div class="col-span-2">
@@ -96,7 +126,7 @@
 
       <div class="col-span-2 flex gap-2 justify-end">
         <button type="button" onclick={() => (showCreate = false)} class="px-3 py-1.5 rounded text-xs bg-gray-700 hover:bg-gray-600 text-gray-300">Cancel</button>
-        <button type="submit" class="px-3 py-1.5 rounded text-xs bg-blue-600 hover:bg-blue-500 text-white">Create</button>
+        <button type="submit" disabled={saving} class="px-3 py-1.5 rounded text-xs bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50">{saving ? 'Creating…' : 'Create'}</button>
       </div>
     </form>
   {/if}

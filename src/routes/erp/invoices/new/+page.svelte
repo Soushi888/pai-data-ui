@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
   import type { PageData } from './$types.js'
   import type { Organization, Contact, Opportunity } from '$lib/data/types.js'
   import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
@@ -73,11 +74,49 @@
     }
   }
 
-  function onSubmit(e: Event) {
+  let saving = $state(false)
+
+  async function onSubmit(e: Event) {
+    e.preventDefault()
     if (!orgName.trim() && !contactName.trim()) {
-      e.preventDefault()
       clientError = 'Fill in at least Organization or Contact.'
+      return
     }
+    saving = true
+    const fd = new FormData(e.target as HTMLFormElement)
+    const tax_rate = taxRate ? Number.parseFloat(taxRate) : undefined
+    const tax_amount = tax_rate ? Math.round(subtotal * tax_rate * 100) / 100 : undefined
+    const res = await fetch('/api/invoices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        organization: orgName,
+        organization_id: orgId || undefined,
+        contact_name: contactName || undefined,
+        contact_id: contactId || undefined,
+        currency: fd.get('currency') || 'CAD',
+        issue_date: fd.get('issue_date'),
+        due_date: fd.get('due_date'),
+        status: fd.get('status') || 'draft',
+        tags,
+        opportunity_id: oppId || undefined,
+        notes: (fd.get('notes') as string)?.trim() || undefined,
+        tax_rate,
+        tax_label: taxLabel.trim() || undefined,
+        tax_amount,
+        line_items: lines.filter(l => l.description.trim()).map(l => ({
+          description: l.description,
+          quantity: l.quantity,
+          unit_price: l.unit_price,
+          amount: l.quantity * l.unit_price
+        })),
+        subtotal,
+        total: subtotal + (tax_amount ?? 0)
+      })
+    })
+    const json = await res.json()
+    if (json.invoice?.id) goto(`/erp/invoices/${json.invoice.id}`)
+    else { clientError = json.detail ?? 'Failed to create invoice'; saving = false }
   }
 
   // ── line items ────────────────────────────────────────────
@@ -347,8 +386,8 @@
     </div>
 
     <div class="flex gap-2">
-      <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-5 py-2 rounded transition-colors">
-        Create Invoice
+      <button type="submit" disabled={saving} class="bg-blue-600 hover:bg-blue-500 text-white text-sm px-5 py-2 rounded transition-colors disabled:opacity-50">
+        {saving ? 'Creating…' : 'Create Invoice'}
       </button>
       <a href="/erp" class="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 transition-colors">Cancel</a>
     </div>

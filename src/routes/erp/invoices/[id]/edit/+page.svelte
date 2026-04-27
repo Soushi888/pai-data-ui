@@ -7,4 +7,5 @@
   content={data.content}
   backUrl="/erp/invoices/{data.id}"
   title={data.id}
+  saveUrl="/api/invoices/{data.id}/raw"
 />

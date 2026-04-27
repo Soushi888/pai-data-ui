@@ -1,11 +1,35 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
+
   let { data } = $props()
 
   const cad = (n: number) =>
     new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(n)
 
   let showCreate = $state(false)
+  let saving = $state(false)
   const today = new Date().toISOString().split('T')[0]
+
+  async function submitCreate(e: Event) {
+    e.preventDefault()
+    saving = true
+    const fd = new FormData(e.target as HTMLFormElement)
+    await fetch('/api/income', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: fd.get('name'),
+        category: fd.get('category'),
+        scope: fd.get('scope'),
+        amount_cad: parseFloat(fd.get('amount_cad') as string),
+        currency_original: fd.get('currency_original') || 'CAD',
+        date: fd.get('date'),
+        tags: ((fd.get('tags') as string) || '').split(',').map(t => t.trim()).filter(Boolean),
+        notes: fd.get('notes') || null
+      })
+    })
+    goto('/erp/income', { invalidateAll: true })
+  }
 </script>
 
 <div class="p-6 max-w-3xl">
@@ -23,7 +47,7 @@
   </p>
 
   {#if showCreate}
-    <form method="POST" action="?/create" class="mb-6 p-4 bg-gray-900 rounded border border-gray-700 grid grid-cols-2 gap-3">
+    <form onsubmit={submitCreate} class="mb-6 p-4 bg-gray-900 rounded border border-gray-700 grid grid-cols-2 gap-3">
       <h2 class="col-span-2 text-sm font-medium text-gray-300 mb-1">New Income Record</h2>
 
       <div class="col-span-2">
@@ -59,7 +83,7 @@
 
       <div class="col-span-2 flex gap-2 justify-end">
         <button type="button" onclick={() => (showCreate = false)} class="px-3 py-1.5 rounded text-xs bg-gray-700 hover:bg-gray-600 text-gray-300">Cancel</button>
-        <button type="submit" class="px-3 py-1.5 rounded text-xs bg-green-700 hover:bg-green-600 text-white">Record</button>
+        <button type="submit" disabled={saving} class="px-3 py-1.5 rounded text-xs bg-green-700 hover:bg-green-600 text-white disabled:opacity-50">{saving ? 'Recording…' : 'Record'}</button>
       </div>
     </form>
   {/if}

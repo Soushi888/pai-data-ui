@@ -4,7 +4,6 @@
    * @component
    */
   import { onMount, onDestroy } from 'svelte'
-  import { enhance } from '$app/forms'
   import type { EditorView } from 'codemirror'
   import type { DecorationSet } from '@codemirror/view'
 
@@ -15,12 +14,15 @@
     backUrl: string;
     /** Heading displayed above the editor. */
     title: string;
+    /** API endpoint to POST { content } for saving. */
+    saveUrl: string;
   }
 
   let {
     content,
     backUrl,
-    title
+    title,
+    saveUrl
   }: Props = $props()
 
   let value = $state(content)
@@ -28,8 +30,19 @@
   let saving = $state(false)
   let saved = $state(false)
   let editorEl: HTMLDivElement
-  let formEl: HTMLFormElement
   let editorView: EditorView | undefined
+
+  async function save() {
+    if (!dirty || saving) return
+    saving = true
+    const res = await fetch(saveUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: value })
+    })
+    saving = false
+    if (res.ok) { saved = true; dirty = false; setTimeout(() => (saved = false), 2000) }
+  }
 
   $effect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -41,7 +54,7 @@
 
   $effect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'Enter' && dirty && !saving) formEl.requestSubmit()
+      if (e.ctrlKey && e.key === 'Enter' && dirty && !saving) save()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -132,7 +145,7 @@
       {
         key: 'Mod-s',
         run: () => {
-          if (dirty && formEl) formEl.requestSubmit()
+          save()
           return true
         }
       }
@@ -189,30 +202,13 @@
       <span class="text-xs text-green-400">Saved ✓</span>
     {/if}
     <div class="ml-auto">
-      <form
-        bind:this={formEl}
-        method="POST"
-        action="?/save"
-        use:enhance={() => {
-          saving = true
-          return async ({ update }) => {
-            await update()
-            saving = false
-            saved = true
-            dirty = false
-            setTimeout(() => (saved = false), 2000)
-          }
-        }}
+      <button
+        onclick={save}
+        disabled={saving || !dirty}
+        class="text-xs px-3 py-1.5 rounded transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40"
       >
-        <input type="hidden" name="content" bind:value />
-        <button
-          type="submit"
-          disabled={saving || !dirty}
-          class="text-xs px-3 py-1.5 rounded transition-colors bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40"
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-      </form>
+        {saving ? 'Saving…' : 'Save'}
+      </button>
     </div>
   </div>
 

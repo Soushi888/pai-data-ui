@@ -7,4 +7,5 @@
   content={data.content}
   backUrl="/pm/projects/{data.id}"
   title={data.id}
+  saveUrl="/api/projects/{data.id}/raw"
 />

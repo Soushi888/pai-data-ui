@@ -38,7 +38,7 @@ def run_yq(path: str) -> dict:
     return json.loads(result2.stdout)
 
 
-CRM_DIR = os.path.expanduser("~/.claude/PAI/USER/DATA/CRM")
+CRM_DIR = os.path.join(os.environ.get("PAI_DATA_ROOT", os.path.expanduser("~/.claude/PAI/USER/DATA")), "CRM")
 
 
 def lookup_entity(entity_id: str) -> dict:

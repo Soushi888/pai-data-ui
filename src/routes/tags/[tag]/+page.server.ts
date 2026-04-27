@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listContacts } from '$lib/data/contacts.js'
 import { listOpportunities } from '$lib/data/opportunities.js'
 import { listOrganizations } from '$lib/data/organizations.js'
@@ -12,12 +12,12 @@ export const load: PageServerLoad = async ({ params }) => {
   const hasTag = (tags?: string[]) => tags?.includes(tag) ?? false
 
   const [contacts, opportunities, organizations, projects, tasks, invoices] = await Promise.all([
-    Effect.runPromise(Effect.map(listContacts(), (cs) => cs.filter((c) => hasTag(c.tags)))),
-    Effect.runPromise(Effect.map(listOpportunities(), (os) => os.filter((o) => hasTag(o.tags)))),
-    Effect.runPromise(Effect.map(listOrganizations(), (os) => os.filter((o) => hasTag(o.tags)))),
-    Effect.runPromise(Effect.map(listProjects(), (ps) => ps.filter((p) => hasTag(p.tags)))),
-    Effect.runPromise(Effect.map(listTasks(), (ts) => ts.filter((t) => hasTag(t.tags)))),
-    Effect.runPromise(Effect.map(listInvoices(), (is) => is.filter((i) => hasTag(i.tags)))),
+    E.runPromise(E.map(listContacts(), (cs) => cs.filter((c) => hasTag(c.tags)))),
+    E.runPromise(E.map(listOpportunities(), (os) => os.filter((o) => hasTag(o.tags)))),
+    E.runPromise(E.map(listOrganizations(), (os) => os.filter((o) => hasTag(o.tags)))),
+    E.runPromise(E.map(listProjects(), (ps) => ps.filter((p) => hasTag(p.tags)))),
+    E.runPromise(E.map(listTasks(), (ts) => ts.filter((t) => hasTag(t.tags)))),
+    E.runPromise(E.map(listInvoices(), (is) => is.filter((i) => hasTag(i.tags)))),
   ])
 
   return { tag, contacts, opportunities, organizations, projects, tasks, invoices }

@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listExpenses } from '$lib/data/expenses.js'
 import { listIncome } from '$lib/data/income.js'
 import { listPayments } from '$lib/data/payments.js'
@@ -24,10 +24,10 @@ function withinSixMonths(dateStr: string): boolean {
 
 export const load: PageServerLoad = async () => {
   const [expR, payR, incR, invR] = await Promise.all([
-    Effect.runPromise(Effect.either(listExpenses())),
-    Effect.runPromise(Effect.either(listPayments())),
-    Effect.runPromise(Effect.either(listIncome())),
-    Effect.runPromise(Effect.either(listInvoices()))
+    E.runPromise(E.either(listExpenses())),
+    E.runPromise(E.either(listPayments())),
+    E.runPromise(E.either(listIncome())),
+    E.runPromise(E.either(listInvoices()))
   ])
 
   const expenses = expR._tag === 'Right' ? expR.right : []

@@ -16,17 +16,17 @@ Extract the search term from the command:
 
 **Full-text search** (default — searches body and frontmatter):
 ```bash
-rg -il "{query}" ~/.claude/PAI/USER/DATA/CRM/
+rg -il "{query}" $PAI_DATA_ROOT/CRM/
 ```
 
 **Tag filter:**
 ```bash
-rg -il "^\s*- {tag}" ~/.claude/PAI/USER/DATA/CRM/contacts/
+rg -il "^\s*- {tag}" $PAI_DATA_ROOT/CRM/contacts/
 ```
 
 **Status filter** (yq approach):
 ```bash
-for f in ~/.claude/PAI/USER/DATA/CRM/contacts/*.md; do
+for f in $PAI_DATA_ROOT/CRM/contacts/*.md; do
   status=$(~/go/bin/yq --front-matter=extract '.status' "$f" 2>/dev/null)
   [ "$status" = "{value}" ] && echo "$f"
 done
@@ -34,7 +34,7 @@ done
 
 **Organization filter:**
 ```bash
-rg -il "organization: .*{org}" ~/.claude/PAI/USER/DATA/CRM/contacts/
+rg -il "organization: .*{org}" $PAI_DATA_ROOT/CRM/contacts/
 ```
 
 ### 3. Extract Summary for Each Matching File

@@ -7,7 +7,7 @@ Create a new project in the PAI PM data layer through conversational input.
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Creating a new project in the Projects skill.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Creating a new project in the Projects skill.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
@@ -34,7 +34,7 @@ Generate a slug from the title:
 
 Check for conflicts:
 ```bash
-ls "$HOME/.claude/PAI/USER/DATA/PM/projects/proj-{slug}.md" 2>/dev/null
+ls "$PAI_DATA_ROOT/PM/projects/proj-{slug}.md" 2>/dev/null
 ```
 If exists, append `-2`, `-3`, etc.
 
@@ -50,16 +50,16 @@ Extract the repo/project id from the URL path (e.g. `soushi888/nondominium` from
 
 ### 4. Write Project File
 
-Copy the template from `~/.claude/PAI/USER/DATA/_templates/project.md`.
+Copy the template from `$PAI_DATA_ROOT/_templates/project.md`.
 
 Fill in all collected fields. Set `created` and `updated` to today's date (YYYY-MM-DD).
 
-Write to `~/.claude/PAI/USER/DATA/PM/projects/{id}.md`.
+Write to `$PAI_DATA_ROOT/PM/projects/{id}.md`.
 
 ### 5. Create Context Folder
 
 ```bash
-mkdir -p "$HOME/.claude/PAI/USER/DATA/PM/context/{id}"
+mkdir -p "$PAI_DATA_ROOT/PM/context/{id}"
 ```
 
 ### 6. Confirm

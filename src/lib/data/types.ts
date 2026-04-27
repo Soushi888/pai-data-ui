@@ -346,6 +346,8 @@ export interface FocusItem {
   text: string;
   /** Whether the item has been completed. */
   done: boolean;
+  /** Whether the item has been worked on but not yet completed. */
+  in_progress?: boolean;
   /** Optional reference to a linked entity (e.g. a task or project ID). */
   linked_ref?: string;
 }
@@ -394,6 +396,30 @@ export interface FocusWeek {
 
 /** Discriminated union of all focus list variants. */
 export type FocusList = FocusDaily | FocusWeek;
+
+// ── PM / Focus — Navigator ────────────────────────────────────────────────────
+
+/** A focus item as it appears within an UnfinishedGroup (no list context needed). */
+export interface UnfinishedGroupItem {
+  itemId: string;
+  text: string;
+  in_progress: boolean;
+  linked_ref?: string;
+}
+
+/** A focus item with full origin context, passed to carry operations. */
+export interface UnfinishedItem extends UnfinishedGroupItem {
+  listId: string;
+  listDate: string;
+}
+
+/** A group of unfinished items from a single focus list, used by the Navigator. */
+export interface UnfinishedGroup {
+  date: string;
+  listId: string;
+  listStatus: 'active' | 'archived';
+  items: UnfinishedGroupItem[];
+}
 
 // ── Shared ────────────────────────────────────────────────────────────────────
 

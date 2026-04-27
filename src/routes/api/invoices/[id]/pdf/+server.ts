@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { generateInvoicePdf, getInvoice, pdfPath } from '$lib/data/invoices.js'
 import type { RequestHandler } from './$types'
 
@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ params }) => {
     })
   }
 
-  const result = await Effect.runPromise(Effect.either(getInvoice(params.id)))
+  const result = await E.runPromise(E.either(getInvoice(params.id)))
   if (result._tag === 'Left') return new Response('Invoice not found', { status: 404 })
 
   const pdfBuffer = await generateInvoicePdf(result.right.data)

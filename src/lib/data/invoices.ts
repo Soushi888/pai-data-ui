@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import PDFDocument from 'pdfkit'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import type { DataError } from './errors.js'
 import { DATA_ROOT, dataPath, requireEntity, writeEntity } from './parser.js'
 import { listByType } from '$lib/server/index-db.js'
@@ -15,8 +15,8 @@ const filePath = (id: string) => `${dir()}/${id}.md`
  * Lists all invoices from the SQLite index.
  * @returns Effect resolving to Invoice[], or failing with DataError.
  */
-export function listInvoices(): Effect.Effect<Invoice[], DataError> {
-  return Effect.try({
+export function listInvoices(): E.Effect<Invoice[], DataError> {
+  return E.try({
     try: () => listByType<Invoice>('invoice'),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   })
@@ -28,7 +28,7 @@ export function listInvoices(): Effect.Effect<Invoice[], DataError> {
  * @param id - Invoice identifier.
  * @returns Effect resolving to entity data and markdown body, or failing with DataError.
  */
-export function getInvoice(id: string): Effect.Effect<EntityWithBody<Invoice>, DataError> {
+export function getInvoice(id: string): E.Effect<EntityWithBody<Invoice>, DataError> {
   return requireEntity<Invoice>(filePath(id), id)
 }
 
@@ -43,10 +43,10 @@ export function updateInvoice(
   id: string,
   patch: Partial<Invoice>,
   body?: string
-): Effect.Effect<Invoice, DataError> {
-  return Effect.flatMap(getInvoice(id), ({ data, body: existingBody }) => {
+): E.Effect<Invoice, DataError> {
+  return E.flatMap(getInvoice(id), ({ data, body: existingBody }) => {
     const updated = { ...data, ...patch, updated: new Date().toISOString().split('T')[0] }
-    return Effect.map(
+    return E.map(
       writeEntity(filePath(id), updated as unknown as Record<string, unknown>, body ?? existingBody),
       () => updated
     )
@@ -61,8 +61,8 @@ export function updateInvoice(
  */
 export function createInvoice(
   data: Omit<Invoice, 'id' | 'type' | 'number' | 'created' | 'updated'>
-): Effect.Effect<Invoice, DataError> {
-  return Effect.flatMap(listInvoices(), (existing) => {
+): E.Effect<Invoice, DataError> {
+  return E.flatMap(listInvoices(), (existing) => {
     const now = new Date()
     const year = now.getFullYear().toString()
     const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -89,7 +89,7 @@ export function createInvoice(
       updated: today
     }
 
-    return Effect.map(
+    return E.map(
       writeEntity(filePath(id), invoice as unknown as Record<string, unknown>, ''),
       () => invoice
     )

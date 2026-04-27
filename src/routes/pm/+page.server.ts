@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listProjects } from '$lib/data/projects.js'
 import { listTasks } from '$lib/data/tasks.js'
 import type { Task } from '$lib/data/types.js'
@@ -13,8 +13,8 @@ function getMonday(): string {
 
 export const load: PageServerLoad = async () => {
   const [projectsR, tasksR] = await Promise.all([
-    Effect.runPromise(Effect.either(listProjects())),
-    Effect.runPromise(Effect.either(listTasks()))
+    E.runPromise(E.either(listProjects())),
+    E.runPromise(E.either(listTasks()))
   ])
 
   const projects = projectsR._tag === 'Right' ? projectsR.right : []

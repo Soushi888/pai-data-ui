@@ -7,7 +7,7 @@ Add a time log entry to a specific task.
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Logging time on a task in the Projects skill.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Logging time on a task in the Projects skill.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
@@ -19,7 +19,7 @@ If a task id is provided in args, use it. Otherwise list in-progress tasks:
 
 ```bash
 YQ="$HOME/go/bin/yq --front-matter=extract"
-DATA="$HOME/.claude/PAI/USER/DATA/PM"
+DATA="$PAI_DATA_ROOT/PM"
 for f in "$DATA/tasks"/task-*.md; do
   [ -f "$f" ] || continue
   status=$($YQ '.status' "$f" 2>/dev/null)
@@ -41,7 +41,7 @@ Ask for:
 ### 3. Read Task File
 
 Use the Read tool to load the task file at:
-`~/.claude/PAI/USER/DATA/PM/tasks/{task-id}.md`
+`$PAI_DATA_ROOT/PM/tasks/{task-id}.md`
 
 ### 4. Update Frontmatter
 

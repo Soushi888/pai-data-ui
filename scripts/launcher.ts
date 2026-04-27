@@ -14,8 +14,10 @@ const SERVER_ENTRY = resolve(PROJECT_DIR, "build", "index.js");
 // NODE_PATH is injected by the systemd service (via install.sh) to survive systemd's minimal PATH.
 const NODE = process.env.NODE_PATH ?? "node";
 
+const ORIGIN = process.env.ORIGIN ?? `http://localhost:${PORT}`;
+
 const proc = spawn([NODE, SERVER_ENTRY], {
-  env: { ...process.env, PORT },
+  env: { ...process.env, PORT, ORIGIN },
   stdout: "inherit",
   stderr: "inherit",
 });

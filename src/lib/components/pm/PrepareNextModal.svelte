@@ -41,7 +41,7 @@
     await fetch(`/api/focus/${list.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: updatedItems, status: 'archived' }),
+      body: JSON.stringify({ items: updatedItems, ...(isDaily ? { status: 'archived' } : {}) }),
     })
 
     if (toCarry.length > 0) {

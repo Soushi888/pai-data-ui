@@ -27,7 +27,7 @@ Examples:
 - "Marc Laporte" → `contact-marc-laporte`
 - "Benoit Grégoire" → `contact-benoit-gregoire` (normalize accents: é→e)
 
-Check for duplicates: `ls ~/.claude/PAI/USER/DATA/CRM/contacts/ | grep "{proposed-id}"`
+Check for duplicates: `ls $PAI_DATA_ROOT/CRM/contacts/ | grep "{proposed-id}"`
 
 If duplicate found, ask: "contact-{id}.md already exists. Overwrite or use a different id?"
 
@@ -56,7 +56,7 @@ Optional fields (include only if provided):
 
 ### 4. Write the File
 
-Write to `~/.claude/PAI/USER/DATA/CRM/contacts/contact-{id}.md` using this structure:
+Write to `$PAI_DATA_ROOT/CRM/contacts/contact-{id}.md` using this structure:
 
 ```
 {frontmatter block}
@@ -72,7 +72,7 @@ Write to `~/.claude/PAI/USER/DATA/CRM/contacts/contact-{id}.md` using this struc
 
 Run:
 ```bash
-~/go/bin/yq --front-matter=extract '.name' ~/.claude/PAI/USER/DATA/CRM/contacts/contact-{id}.md
+~/go/bin/yq --front-matter=extract '.name' $PAI_DATA_ROOT/CRM/contacts/contact-{id}.md
 ```
 
 Must return the contact's name without error (exit 0).
@@ -81,7 +81,7 @@ Must return the contact's name without error (exit 0).
 
 Output:
 ```
-✅ Contact created: ~/.claude/PAI/USER/DATA/CRM/contacts/contact-{id}.md
+✅ Contact created: $PAI_DATA_ROOT/CRM/contacts/contact-{id}.md
 
 Name: {Name}
 Organization: {Organization}

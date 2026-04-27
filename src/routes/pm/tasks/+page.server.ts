@@ -1,12 +1,12 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listProjects } from '$lib/data/projects.js'
 import { listTasks } from '$lib/data/tasks.js'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async () => {
   const [tasksR, projectsR] = await Promise.all([
-    Effect.runPromise(Effect.either(listTasks())),
-    Effect.runPromise(Effect.either(listProjects()))
+    E.runPromise(E.either(listTasks())),
+    E.runPromise(E.either(listProjects()))
   ])
 
   const tasks = tasksR._tag === 'Right' ? tasksR.right : []

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import type { DataError } from './errors.js'
 import { FileNotFoundError, ParseError } from './errors.js'
 import { dataPath, requireEntity, writeEntity } from './parser.js'
@@ -13,8 +13,8 @@ const filePath = (id: string) => `${dir()}/${id}.md`
  * Lists all organizations from the SQLite index.
  * @returns Effect resolving to an array of Organization objects, or failing with DataError.
  */
-export function listOrganizations(): Effect.Effect<Organization[], DataError> {
-  return Effect.try({
+export function listOrganizations(): E.Effect<Organization[], DataError> {
+  return E.try({
     try: () => listByType<Organization>('organization'),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   })
@@ -25,7 +25,7 @@ export function listOrganizations(): Effect.Effect<Organization[], DataError> {
  * @param id - Organization identifier, e.g. "org-acme-corp".
  * @returns Effect resolving to the organization data and markdown body, or failing with DataError.
  */
-export function getOrganization(id: string): Effect.Effect<EntityWithBody<Organization>, DataError> {
+export function getOrganization(id: string): E.Effect<EntityWithBody<Organization>, DataError> {
   return requireEntity<Organization>(filePath(id), id)
 }
 
@@ -41,10 +41,10 @@ export function updateOrganization(
   id: string,
   patch: Partial<Organization>,
   body?: string
-): Effect.Effect<Organization, DataError> {
-  return Effect.flatMap(getOrganization(id), ({ data, body: existingBody }) => {
+): E.Effect<Organization, DataError> {
+  return E.flatMap(getOrganization(id), ({ data, body: existingBody }) => {
     const updated = { ...data, ...patch }
-    return Effect.map(
+    return E.map(
       writeEntity(filePath(id), updated as Record<string, unknown>, body ?? existingBody),
       () => updated
     )
@@ -61,7 +61,7 @@ export function updateOrganization(
 export function createOrganization(
   data: Omit<Organization, 'id' | 'type' | 'created'>,
   body = ''
-): Effect.Effect<Organization, DataError> {
+): E.Effect<Organization, DataError> {
   const id = `org-${data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`
   const org: Organization = {
     ...data,
@@ -70,9 +70,9 @@ export function createOrganization(
     created: new Date().toISOString().split('T')[0]
   }
   if (existsSync(filePath(id))) {
-    return Effect.fail(new FileNotFoundError({ id: 'conflict' }))
+    return E.fail(new FileNotFoundError({ id: 'conflict' }))
   }
-  return Effect.map(
+  return E.map(
     writeEntity(filePath(id), org as unknown as Record<string, unknown>, body),
     () => org
   )

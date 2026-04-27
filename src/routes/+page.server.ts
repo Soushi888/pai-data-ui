@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listContacts } from '$lib/data/contacts.js'
 import { listInvoices } from '$lib/data/invoices.js'
 import { listProjects } from '$lib/data/projects.js'
@@ -21,10 +21,10 @@ function daysAgo(dateStr: string): number {
 
 export const load: PageServerLoad = async () => {
   const [contacts, invoices, projects, tasks] = await Promise.all([
-    Effect.runPromise(Effect.either(listContacts())),
-    Effect.runPromise(Effect.either(listInvoices())),
-    Effect.runPromise(Effect.either(listProjects())),
-    Effect.runPromise(Effect.either(listTasks()))
+    E.runPromise(E.either(listContacts())),
+    E.runPromise(E.either(listInvoices())),
+    E.runPromise(E.either(listProjects())),
+    E.runPromise(E.either(listTasks()))
   ])
 
   const allContacts = contacts._tag === 'Right' ? contacts.right : []

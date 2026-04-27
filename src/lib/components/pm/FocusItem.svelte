@@ -1,8 +1,8 @@
 <script lang="ts">
-  /**
-   * Individual focus item with checkbox, drag-reorder, and inline edit support.
-   * @component
-   */
+    /**
+     * Individual focus item with checkbox, drag-reorder, and inline edit support.
+     * @component
+     */
     import WikiLink from "./WikiLink.svelte";
     import type { FocusItem } from "$lib/data/types.js";
 
@@ -91,6 +91,9 @@
     const showBelow = $derived(
         dragOverId === item.id && dragPosition === "below" && !isDragging,
     );
+    const itemState = $derived(
+        item.done ? "done" : item.in_progress ? "in_progress" : "pending",
+    );
 </script>
 
 <li
@@ -130,14 +133,21 @@
     <button
         class="mt-0.5 flex-shrink-0"
         onclick={() => onToggle(item.id)}
-        aria-label={item.done ? "Mark incomplete" : "Mark complete"}
+        aria-label={itemState === "done"
+            ? "Mark incomplete"
+            : itemState === "in_progress"
+              ? "Mark complete"
+              : "Mark in progress"}
     >
         <span
-            class="flex h-4 w-4 items-center justify-center rounded border {item.done
+            class="flex h-4 w-4 items-center justify-center rounded border {itemState ===
+            'done'
                 ? 'border-green-500 bg-green-500/20 text-green-400'
-                : 'border-gray-500 hover:border-gray-400'}"
+                : itemState === 'in_progress'
+                  ? 'border-amber-500 bg-amber-500/20 text-amber-400'
+                  : 'border-gray-500 hover:border-gray-400'}"
         >
-            {#if item.done}
+            {#if itemState === "done"}
                 <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none">
                     <path
                         d="M2 6l3 3 5-5"
@@ -145,6 +155,15 @@
                         stroke-width="1.5"
                         stroke-linecap="round"
                         stroke-linejoin="round"
+                    />
+                </svg>
+            {:else if itemState === "in_progress"}
+                <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none">
+                    <path
+                        d="M2 6h8"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
                     />
                 </svg>
             {/if}
@@ -161,13 +180,18 @@
         />
     {:else}
         <span
-            class="flex flex-1 flex-wrap items-center gap-1 text-sm {item.done
+            class="flex flex-1 flex-wrap items-center gap-1 text-sm {itemState ===
+            'done'
                 ? 'text-gray-500 line-through'
-                : 'text-gray-200'}"
+                : itemState === 'in_progress'
+                  ? 'text-amber-300'
+                  : 'text-gray-200'}"
             ondblclick={() => {
-                if (!disabled && !item.done) onEditStart?.(item.id);
+                if (!disabled && itemState !== "done") onEditStart?.(item.id);
             }}
-            title={disabled || item.done ? "" : "Double-click to edit"}
+            title={disabled || itemState === "done"
+                ? ""
+                : "Double-click to edit"}
         >
             {item.text}
             <WikiLink ref={item.linked_ref} />

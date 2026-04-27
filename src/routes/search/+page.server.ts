@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listContacts } from '$lib/data/contacts.js'
 import { listInvoices } from '$lib/data/invoices.js'
 import { listOpportunities } from '$lib/data/opportunities.js'
@@ -13,12 +13,12 @@ export const load: PageServerLoad = async ({ url }) => {
   if (!q) return { q, results: [] }
 
   const [contacts, opps, orgs, invoices, projects, tasks] = await Promise.all([
-    Effect.runPromise(Effect.either(listContacts())),
-    Effect.runPromise(Effect.either(listOpportunities())),
-    Effect.runPromise(Effect.either(listOrganizations())),
-    Effect.runPromise(Effect.either(listInvoices())),
-    Effect.runPromise(Effect.either(listProjects())),
-    Effect.runPromise(Effect.either(listTasks()))
+    E.runPromise(E.either(listContacts())),
+    E.runPromise(E.either(listOpportunities())),
+    E.runPromise(E.either(listOrganizations())),
+    E.runPromise(E.either(listInvoices())),
+    E.runPromise(E.either(listProjects())),
+    E.runPromise(E.either(listTasks()))
   ])
 
   const results: SearchResult[] = []

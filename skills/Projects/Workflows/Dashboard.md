@@ -7,17 +7,42 @@ Display all active and on-hold projects with their current task state.
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Running the Dashboard workflow in the Projects skill.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Running the Dashboard workflow in the Projects skill.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
 ## Steps
 
+### 0. Read Today's Focus
+
+```bash
+TODAY=$(date +%Y-%m-%d)
+FOCUS_FILE="$PAI_DATA_ROOT/PM/focus/focus-daily-$TODAY.md"
+YQ="$HOME/go/bin/yq --front-matter=extract"
+if [ -f "$FOCUS_FILE" ]; then
+  $YQ '{items: .items}' "$FOCUS_FILE" 2>/dev/null
+fi
+```
+
+If the file exists, render a focus block above the projects section:
+
+```
+Today's Focus — 2026-04-24
+──────────────────────────────────────────────────────
+✓ item-1   Write Nondominium spec document          -> task-nondo-spec
+○ item-2   Review Tiki PR #157
+○ item-3   Investigate PAI memory leak
+```
+
+Status indicators: `✓` done, `○` not done. If `linked_ref` is set, show `-> {linked_ref}` at end of line.
+
+If no focus file exists for today, skip this block silently.
+
 ### 1. Read All Projects
 
 ```bash
 YQ="$HOME/go/bin/yq --front-matter=extract"
-DATA="$HOME/.claude/PAI/USER/DATA/PM"
+DATA="$PAI_DATA_ROOT/PM"
 for f in "$DATA/projects"/proj-*.md; do
   [ -f "$f" ] || continue
   $YQ '{id: .id, title: .title, project_type: .project_type, status: .status, organization: .organization}' "$f" 2>/dev/null

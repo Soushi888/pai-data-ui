@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import type { DataError } from './errors.js'
 import { FileNotFoundError, ParseError } from './errors.js'
 import { dataPath, requireEntity, writeEntity } from './parser.js'
@@ -13,8 +13,8 @@ const filePath = (id: string) => `${dir()}/${id}.md`
  * Lists all expenses from the SQLite index.
  * @returns Effect resolving to Expense[], or failing with DataError.
  */
-export function listExpenses(): Effect.Effect<Expense[], DataError> {
-  return Effect.try({
+export function listExpenses(): E.Effect<Expense[], DataError> {
+  return E.try({
     try: () => listByType<Expense>('expense'),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   })
@@ -26,7 +26,7 @@ export function listExpenses(): Effect.Effect<Expense[], DataError> {
  * @param id - Expense identifier.
  * @returns Effect resolving to entity data and markdown body, or failing with DataError.
  */
-export function getExpense(id: string): Effect.Effect<EntityWithBody<Expense>, DataError> {
+export function getExpense(id: string): E.Effect<EntityWithBody<Expense>, DataError> {
   return requireEntity<Expense>(filePath(id), id)
 }
 
@@ -41,10 +41,10 @@ export function updateExpense(
   id: string,
   patch: Partial<Expense>,
   body?: string
-): Effect.Effect<Expense, DataError> {
-  return Effect.flatMap(getExpense(id), ({ data, body: existingBody }) => {
+): E.Effect<Expense, DataError> {
+  return E.flatMap(getExpense(id), ({ data, body: existingBody }) => {
     const updated = { ...data, ...patch, updated: new Date().toISOString().split('T')[0] }
-    return Effect.map(
+    return E.map(
       writeEntity(filePath(id), updated as unknown as Record<string, unknown>, body ?? existingBody),
       () => updated
     )
@@ -60,10 +60,10 @@ export function updateExpense(
 export function createExpense(
   data: Omit<Expense, 'id' | 'type' | 'created' | 'updated'>,
   body = ''
-): Effect.Effect<Expense, DataError> {
+): E.Effect<Expense, DataError> {
   const id = `exp-${data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`
   if (existsSync(filePath(id))) {
-    return Effect.fail(new FileNotFoundError({ id: 'conflict' }))
+    return E.fail(new FileNotFoundError({ id: 'conflict' }))
   }
   const now = new Date().toISOString().split('T')[0]
   const expense: Expense = {
@@ -73,7 +73,7 @@ export function createExpense(
     created: now,
     updated: now
   }
-  return Effect.map(
+  return E.map(
     writeEntity(filePath(id), expense as unknown as Record<string, unknown>, body),
     () => expense
   )

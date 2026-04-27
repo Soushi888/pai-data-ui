@@ -37,6 +37,7 @@
             label: "ERP",
             items: [
                 { href: "/erp/expenses", label: "Expenses", count: () => counts.expenses },
+                { href: "/erp/payments", label: "Payments", count: () => null },
                 { href: "/erp/income", label: "Income", count: () => counts.income },
                 { href: "/erp", label: "Invoices", count: () => counts.invoices },
                 { href: "/erp/stats", label: "Stats", count: () => null },

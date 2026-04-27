@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { createOrganization, listOrganizations } from '$lib/data/organizations.js'
 import { errorResponse } from '$lib/server/response.js'
 import type { RequestHandler } from './$types'
@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ url }) => {
   const status = url.searchParams.get('status')
   const tag = url.searchParams.get('tag')
 
-  const result = await Effect.runPromise(Effect.either(listOrganizations()))
+  const result = await E.runPromise(E.either(listOrganizations()))
   if (result._tag === 'Left') return errorResponse(result.left)
 
   let orgs = result.right
@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json()
-  const result = await Effect.runPromise(Effect.either(createOrganization(body)))
+  const result = await E.runPromise(E.either(createOrganization(body)))
   if (result._tag === 'Left') return errorResponse(result.left)
   return json({ organization: result.right }, { status: 201 })
 }

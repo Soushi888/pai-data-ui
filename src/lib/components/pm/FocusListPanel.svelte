@@ -47,6 +47,7 @@
   let editingId = $state<string | null>(null)
 
   const doneCount = $derived(localItems.filter((i) => i.done).length)
+  const inProgressCount = $derived(localItems.filter((i) => !i.done && i.in_progress).length)
   const totalCount = $derived(localItems.length)
   const isArchived = $derived(list?.status === 'archived')
 
@@ -69,9 +70,15 @@
     onCreated?.()
   }
 
+  function cycleItem(i: FocusItemType): FocusItemType {
+    if (i.done) return { ...i, done: false, in_progress: false }
+    if (i.in_progress) return { ...i, done: true, in_progress: false }
+    return { ...i, done: false, in_progress: true }
+  }
+
   async function toggleItem(itemId: string) {
     if (!list) return
-    const updated = localItems.map((i) => i.id === itemId ? { ...i, done: !i.done } : i)
+    const updated = localItems.map((i) => i.id === itemId ? cycleItem(i) : i)
     localItems = updated
     await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
@@ -178,7 +185,9 @@
     </div>
     {#if list}
       <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-400">{doneCount}/{totalCount}</span>
+        <span class="text-xs text-gray-400">
+          {doneCount}/{totalCount}{#if inProgressCount > 0} · <span class="text-amber-400">{inProgressCount} in progress</span>{/if}
+        </span>
         {#if isArchived}
           <span class="rounded bg-gray-700 px-1.5 py-0.5 text-xs text-gray-500">archived</span>
         {:else}

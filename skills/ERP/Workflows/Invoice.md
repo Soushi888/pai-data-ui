@@ -46,7 +46,7 @@ If the file does not exist, output:
 ⚠ InvoiceConfig.md not found. Create it at:
   ~/.claude/PAI/USER/SKILLCUSTOMIZATIONS/ERP/InvoiceConfig.md
 
-Use the template in ~/.claude/PAI/USER/DATA/_templates/invoice.md as reference.
+Use the template in $PAI_DATA_ROOT/_templates/invoice.md as reference.
 Fill in sender_name, sender_address, sender_email, and payment_instructions.
 ```
 Then abort.
@@ -85,7 +85,7 @@ Extract from command arguments if provided. Otherwise prompt for:
 
 **Client info:**
 - Organization name (required)
-- Contact ID — optional. If provided, verify file exists: `ls ~/.claude/PAI/USER/DATA/CRM/contacts/contact-{id}.md`
+- Contact ID — optional. If provided, verify file exists: `ls $PAI_DATA_ROOT/CRM/contacts/contact-{id}.md`
 - Opportunity ID — optional link to an existing opportunity
 
 **Line items** (loop until user enters empty line):
@@ -113,7 +113,7 @@ After all items are entered, compute:
 
 ### 5. Write the Invoice File
 
-Path: `~/.claude/PAI/USER/DATA/ERP/invoices/inv-YYYY-NNN.md`
+Path: `$PAI_DATA_ROOT/ERP/invoices/inv-YYYY-NNN.md`
 
 ```yaml
 ---
@@ -155,7 +155,7 @@ Omit `contact`, `opportunity`, `tax_rate`, `tax_label`, `tax_amount` fields enti
 ### 6. Verify
 
 ```bash
-~/go/bin/yq --front-matter=extract '.number' ~/.claude/PAI/USER/DATA/ERP/invoices/inv-YYYY-NNN.md
+~/go/bin/yq --front-matter=extract '.number' $PAI_DATA_ROOT/ERP/invoices/inv-YYYY-NNN.md
 ```
 
 Must return the invoice number without error.
@@ -184,7 +184,7 @@ Export to PDF: crm:invoice export inv-2026-001
 ### 1. Scan
 
 ```bash
-ls ~/.claude/PAI/USER/DATA/ERP/invoices/
+ls $PAI_DATA_ROOT/ERP/invoices/
 ```
 
 If empty: "No invoices found. Create one with `crm:invoice create`."
@@ -202,7 +202,7 @@ For each `.md` file:
   currency: .currency,
   due_date: .due_date,
   paid_date: .paid_date
-}' ~/.claude/PAI/USER/DATA/ERP/invoices/{file}.md
+}' $PAI_DATA_ROOT/ERP/invoices/{file}.md
 ```
 
 Flag as overdue: `status == "sent"` AND `due_date < today`.
@@ -245,7 +245,7 @@ Total: {n} invoices | Outstanding: {sum} CAD | Paid YTD: {sum} CAD
 
 Check invoice file exists:
 ```bash
-ls ~/.claude/PAI/USER/DATA/ERP/invoices/{id}.md
+ls $PAI_DATA_ROOT/ERP/invoices/{id}.md
 ```
 
 Check InvoiceConfig.md exists (same check as create step 1).
@@ -253,16 +253,16 @@ Check InvoiceConfig.md exists (same check as create step 1).
 ### 2. Ensure Output Directory
 
 ```bash
-mkdir -p ~/.claude/PAI/USER/DATA/ERP/exports/invoices/{id}/
+mkdir -p $PAI_DATA_ROOT/ERP/exports/invoices/{id}/
 ```
 
 ### 3. Run Export Tool
 
 ```bash
 python3 ~/.claude/skills/ERP/Tools/ExportInvoice.py \
-  ~/.claude/PAI/USER/DATA/ERP/invoices/{id}.md \
+  $PAI_DATA_ROOT/ERP/invoices/{id}.md \
   ~/.claude/PAI/USER/SKILLCUSTOMIZATIONS/ERP/InvoiceConfig.md \
-  ~/.claude/PAI/USER/DATA/ERP/exports/invoices/{id}/
+  $PAI_DATA_ROOT/ERP/exports/invoices/{id}/
 ```
 
 The script prints the output PDF path on success, or an error message on failure.
@@ -270,7 +270,7 @@ The script prints the output PDF path on success, or an error message on failure
 ### 4. Confirm
 
 ```
-✅ PDF exported: ~/.claude/PAI/USER/DATA/ERP/exports/invoices/inv-2026-001/IN2604-0006.pdf
+✅ PDF exported: $PAI_DATA_ROOT/ERP/exports/invoices/inv-2026-001/IN2604-0006.pdf
 ```
 
 ---
@@ -281,7 +281,7 @@ The script prints the output PDF path on success, or an error message on failure
 
 ```bash
 ~/go/bin/yq --front-matter=extract '{status: .status, number: .number}' \
-  ~/.claude/PAI/USER/DATA/ERP/invoices/{id}.md
+  $PAI_DATA_ROOT/ERP/invoices/{id}.md
 ```
 
 If status is already `paid`: "Invoice {number} is already marked as paid."
@@ -294,7 +294,7 @@ Use `yq` to update frontmatter fields in place:
 ```bash
 ~/go/bin/yq --front-matter=process \
   '.status = "paid" | .paid_date = "{today}" | .updated = "{today}"' \
-  ~/.claude/PAI/USER/DATA/ERP/invoices/{id}.md
+  $PAI_DATA_ROOT/ERP/invoices/{id}.md
 ```
 
 ### 3. Confirm

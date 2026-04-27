@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { createProject, listProjects } from '$lib/data/projects.js'
 import { errorResponse } from '$lib/server/response.js'
 import type { RequestHandler } from './$types'
@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ url }) => {
   const status = url.searchParams.get('status')
   const project_type = url.searchParams.get('project_type')
 
-  const result = await Effect.runPromise(Effect.either(listProjects()))
+  const result = await E.runPromise(E.either(listProjects()))
   if (result._tag === 'Left') return errorResponse(result.left)
 
   let projects = result.right
@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json()
-  const result = await Effect.runPromise(Effect.either(createProject(body)))
+  const result = await E.runPromise(E.either(createProject(body)))
   if (result._tag === 'Left') return errorResponse(result.left)
   return json({ project: result.right }, { status: 201 })
 }

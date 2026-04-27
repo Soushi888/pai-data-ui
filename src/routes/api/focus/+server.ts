@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { Effect } from "effect";
+import { Effect as E } from "effect";
 import {
   createFocusList,
   isoWeek,
@@ -12,18 +12,18 @@ import type { RequestHandler } from "./$types";
 export const GET: RequestHandler = async ({ url }) => {
   const type = url.searchParams.get("type");
   if (type === "focus-daily") {
-    const result = await Effect.runPromise(Effect.either(listFocusDaily()));
+    const result = await E.runPromise(E.either(listFocusDaily()));
     if (result._tag === "Left") return json({ lists: [] });
     return json({ lists: result.right.sort((a, b) => b.date.localeCompare(a.date)) });
   }
   if (type === "focus-week") {
-    const result = await Effect.runPromise(Effect.either(listFocusWeek()));
+    const result = await E.runPromise(E.either(listFocusWeek()));
     if (result._tag === "Left") return json({ lists: [] });
     return json({ lists: result.right.sort((a, b) => b.week.localeCompare(a.week)) });
   }
   const [dailyR, weekR] = await Promise.all([
-    Effect.runPromise(Effect.either(listFocusDaily())),
-    Effect.runPromise(Effect.either(listFocusWeek())),
+    E.runPromise(E.either(listFocusDaily())),
+    E.runPromise(E.either(listFocusWeek())),
   ]);
   return json({
     daily: dailyR._tag === "Right" ? dailyR.right : [],
@@ -53,8 +53,8 @@ export const POST: RequestHandler = async ({ request }) => {
       created: dateStr,
       updated: dateStr,
     };
-    const result = await Effect.runPromise(
-      Effect.either(createFocusList(data, "\n## Intentions\n\n## Notes\n"))
+    const result = await E.runPromise(
+      E.either(createFocusList(data, "\n## Intentions\n\n## Notes\n"))
     );
     if (result._tag === "Left") return json({ error: "Failed to create list" }, { status: 500 });
     return json({ list: result.right });
@@ -73,8 +73,8 @@ export const POST: RequestHandler = async ({ request }) => {
       created: dateStr,
       updated: dateStr,
     };
-    const result = await Effect.runPromise(
-      Effect.either(createFocusList(data, "\n## Weekly Intentions\n\n## Notes\n"))
+    const result = await E.runPromise(
+      E.either(createFocusList(data, "\n## Weekly Intentions\n\n## Notes\n"))
     );
     if (result._tag === "Left") return json({ error: "Failed to create list" }, { status: 500 });
     return json({ list: result.right });

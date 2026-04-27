@@ -19,7 +19,7 @@ If this directory exists, load and apply any PREFERENCES.md, configurations, or 
    ```bash
    curl -s -X POST http://localhost:8888/notify \
      -H "Content-Type: application/json" \
-     -d '{"message": "Running the WORKFLOWNAME workflow in the CRM skill to ACTION", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+     -d '{"message": "Running the WORKFLOWNAME workflow in the CRM skill to ACTION", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
      > /dev/null 2>&1 &
    ```
 
@@ -32,12 +32,14 @@ If this directory exists, load and apply any PREFERENCES.md, configurations, or 
 
 # CRM Skill
 
-Contact and opportunity management via the PAI data layer at `~/.claude/PAI/USER/DATA/CRM/`. Contacts, opportunities, and organizations are markdown files with YAML frontmatter. All queries use `~/go/bin/yq` with the `--front-matter=extract` flag.
+Contact and opportunity management via the PAI data layer at `$PAI_DATA_ROOT/CRM/`. Contacts, opportunities, and organizations are markdown files with YAML frontmatter. All queries use `~/go/bin/yq` with the `--front-matter=extract` flag.
 
 ## Data Location
 
+> `$PAI_DATA_ROOT` is set via `.env` (default: `~/.claude/PAI/USER/DATA`).
+
 ```
-~/.claude/PAI/USER/DATA/CRM/
+$PAI_DATA_ROOT/CRM/
 ├── contacts/          # contact-*.md files
 ├── opportunities/     # opp-*.md files
 ├── organizations/     # org-*.md files
@@ -68,7 +70,7 @@ Contact and opportunity management via the PAI data layer at `~/.claude/PAI/USER
 
 ## Schemas
 
-All entity types are defined in `~/.claude/PAI/USER/DATA/_schemas/`. Templates are in `~/.claude/PAI/USER/DATA/_templates/`.
+All entity types are defined in `$PAI_DATA_ROOT/_schemas/`. Templates are in `$PAI_DATA_ROOT/_templates/`.
 
 ## Notes for the Homunculus
 

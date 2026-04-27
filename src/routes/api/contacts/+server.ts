@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit'
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { createContact, listContacts } from '$lib/data/contacts.js'
 import { errorResponse } from '$lib/server/response.js'
 import type { RequestHandler } from './$types'
@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ url }) => {
   const tag = url.searchParams.get('tag')
   const q = url.searchParams.get('q')?.toLowerCase()
 
-  const result = await Effect.runPromise(Effect.either(listContacts()))
+  const result = await E.runPromise(E.either(listContacts()))
   if (result._tag === 'Left') return errorResponse(result.left)
 
   let contacts = result.right
@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json()
-  const result = await Effect.runPromise(Effect.either(createContact(body)))
+  const result = await E.runPromise(E.either(createContact(body)))
   if (result._tag === 'Left') return errorResponse(result.left)
   return json({ contact: result.right }, { status: 201 })
 }

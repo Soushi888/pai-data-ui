@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import type { DataError } from './errors.js'
 import { ParseError } from './errors.js'
 import { dataPath, requireEntity, writeEntity } from './parser.js'
@@ -12,8 +12,8 @@ const filePath = (id: string) => `${dir()}/${id}.md`
  * Lists all tasks from the SQLite index.
  * @returns Effect resolving to Task[], or failing with DataError.
  */
-export function listTasks(): Effect.Effect<Task[], DataError> {
-  return Effect.try({
+export function listTasks(): E.Effect<Task[], DataError> {
+  return E.try({
     try: () => listByType<Task>('task'),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   })
@@ -25,7 +25,7 @@ export function listTasks(): Effect.Effect<Task[], DataError> {
  * @param id - Task identifier.
  * @returns Effect resolving to task data + body, or failing with DataError.
  */
-export function getTask(id: string): Effect.Effect<EntityWithBody<Task>, DataError> {
+export function getTask(id: string): E.Effect<EntityWithBody<Task>, DataError> {
   return requireEntity<Task>(filePath(id), id)
 }
 
@@ -41,10 +41,10 @@ export function updateTask(
   id: string,
   patch: Partial<Task>,
   body?: string
-): Effect.Effect<Task, DataError> {
-  return Effect.flatMap(getTask(id), ({ data, body: existingBody }) => {
+): E.Effect<Task, DataError> {
+  return E.flatMap(getTask(id), ({ data, body: existingBody }) => {
     const updated = { ...data, ...patch, updated: new Date().toISOString().split('T')[0] }
-    return Effect.map(
+    return E.map(
       writeEntity(filePath(id), updated as unknown as Record<string, unknown>, body ?? existingBody),
       () => updated
     )
@@ -60,14 +60,14 @@ export function updateTask(
 export function appendTimeLog(
   id: string,
   entry: TimeLogEntry
-): Effect.Effect<Task, DataError> {
-  return Effect.flatMap(getTask(id), ({ data, body }) => {
+): E.Effect<Task, DataError> {
+  return E.flatMap(getTask(id), ({ data, body }) => {
     const updated: Task = {
       ...data,
       time_logs: [...(data.time_logs ?? []), entry],
       updated: new Date().toISOString().split('T')[0]
     }
-    return Effect.map(
+    return E.map(
       writeEntity(filePath(id), updated as unknown as Record<string, unknown>, body),
       () => updated
     )
@@ -83,11 +83,11 @@ export function appendTimeLog(
 export function createTask(
   data: Omit<Task, 'id' | 'type' | 'created' | 'updated'>,
   body = ''
-): Effect.Effect<Task, DataError> {
+): E.Effect<Task, DataError> {
   const today = new Date().toISOString().split('T')[0]
   const id = `task-${data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 40)}`
   const task: Task = { ...data, id, type: 'task', created: today, updated: today }
-  return Effect.map(writeEntity(filePath(id), task as unknown as Record<string, unknown>, body), () => task)
+  return E.map(writeEntity(filePath(id), task as unknown as Record<string, unknown>, body), () => task)
 }
 
 /**

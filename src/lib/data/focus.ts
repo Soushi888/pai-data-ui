@@ -1,8 +1,8 @@
-import { Effect, pipe } from "effect";
+import { Effect as E, pipe } from "effect";
 import type { DataError } from "./errors.js";
 import { ParseError } from "./errors.js";
 import { dataPath, requireEntity, writeEntity } from "./parser.js";
-import { listByType } from "$lib/server/index-db.js";
+import { listByType, getDb } from "$lib/server/index-db.js";
 import type {
   EntityWithBody,
   FocusDaily,
@@ -56,8 +56,8 @@ export function currentWeekId(): string {
  * Lists all daily focus lists.
  * @returns Effect resolving to FocusDaily[], or failing with DataError.
  */
-export function listFocusDaily(): Effect.Effect<FocusDaily[], DataError> {
-  return Effect.try({
+export function listFocusDaily(): E.Effect<FocusDaily[], DataError> {
+  return E.try({
     try: () => listByType<FocusDaily>("focus-daily"),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   });
@@ -67,8 +67,8 @@ export function listFocusDaily(): Effect.Effect<FocusDaily[], DataError> {
  * Lists all weekly focus lists.
  * @returns Effect resolving to FocusWeek[], or failing with DataError.
  */
-export function listFocusWeek(): Effect.Effect<FocusWeek[], DataError> {
-  return Effect.try({
+export function listFocusWeek(): E.Effect<FocusWeek[], DataError> {
+  return E.try({
     try: () => listByType<FocusWeek>("focus-week"),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   });
@@ -81,7 +81,7 @@ export function listFocusWeek(): Effect.Effect<FocusWeek[], DataError> {
  */
 export function getFocusList<T extends FocusList>(
   id: string,
-): Effect.Effect<EntityWithBody<T>, DataError> {
+): E.Effect<EntityWithBody<T>, DataError> {
   return requireEntity<T>(filePath(id), id);
 }
 
@@ -94,8 +94,8 @@ export function getFocusList<T extends FocusList>(
 export function createFocusList<T extends FocusList>(
   data: T,
   body = "",
-): Effect.Effect<T, DataError> {
-  return Effect.map(
+): E.Effect<T, DataError> {
+  return E.map(
     writeEntity(
       filePath(data.id),
       data as unknown as Record<string, unknown>,
@@ -117,10 +117,10 @@ export function updateFocusList<T extends FocusList>(
   id: string,
   patch: Partial<T>,
   body?: string,
-): Effect.Effect<T, DataError> {
-  return Effect.flatMap(getFocusList<T>(id), ({ data, body: existingBody }) => {
+): E.Effect<T, DataError> {
+  return E.flatMap(getFocusList<T>(id), ({ data, body: existingBody }) => {
     const updated = { ...data, ...patch, updated: today() };
-    return Effect.map(
+    return E.map(
       writeEntity(
         filePath(id),
         updated as unknown as Record<string, unknown>,
@@ -131,25 +131,57 @@ export function updateFocusList<T extends FocusList>(
   });
 }
 
+function cycleItemState(item: FocusItem): FocusItem {
+  if (item.done) return { ...item, done: false, in_progress: false };
+  if (item.in_progress) return { ...item, done: true, in_progress: false };
+  return { ...item, done: false, in_progress: true };
+}
+
 /**
- * Toggles the done status of an item within a focus list.
+ * Cycles the state of an item within a focus list: pending → in_progress → done → pending.
  * @param id - Focus list identifier.
- * @param itemId - Identifier of the focus item to toggle within the list.
+ * @param itemId - Identifier of the focus item to cycle within the list.
  * @returns Effect resolving to the updated focus list, or failing with DataError.
  */
 export function toggleItem(
   id: string,
   itemId: string,
-): Effect.Effect<FocusList, DataError> {
-  return Effect.flatMap(getFocusList(id), ({ data, body }) => {
+): E.Effect<FocusList, DataError> {
+  return E.flatMap(getFocusList(id), ({ data, body }) => {
     const updatedItems = (data.items as FocusItem[]).map((item) =>
-      item.id === itemId ? { ...item, done: !item.done } : item,
+      item.id === itemId ? cycleItemState(item) : item,
     );
     return updateFocusList(
       id,
       { items: updatedItems } as Partial<FocusList>,
       body,
     );
+  });
+}
+
+/**
+ * Lists daily focus lists whose date falls within the last N calendar days.
+ * When days is 'all', returns every daily list.
+ * @param days - Number of days to look back, or 'all' for full history.
+ * @returns Effect resolving to FocusDaily[], or failing with DataError.
+ */
+export function listFocusDailyInRange(days: number | 'all'): E.Effect<FocusDaily[], DataError> {
+  return E.try({
+    try: () => {
+      if (days === 'all') {
+        return listByType<FocusDaily>('focus-daily');
+      }
+      const rows = getDb()
+        .prepare(
+          `SELECT data FROM entities
+           WHERE type = 'focus-daily'
+             AND json_extract(data, '$.date') >= date('now', ?)
+           ORDER BY json_extract(data, '$.date') DESC`
+        )
+        .all(`-${days} days`) as { data: string }[];
+      return rows.map((r) => JSON.parse(r.data) as FocusDaily);
+    },
+    catch: (e) => new ParseError({ file: dir(), cause: e }),
   });
 }
 
@@ -164,8 +196,8 @@ export function addItem(
   id: string,
   text: string,
   linkedRef?: string,
-): Effect.Effect<FocusList, DataError> {
-  return Effect.flatMap(getFocusList(id), ({ data, body }) => {
+): E.Effect<FocusList, DataError> {
+  return E.flatMap(getFocusList(id), ({ data, body }) => {
     const nextId = `item-${data.items.length + 1}`;
     const newItem: FocusItem = {
       id: nextId,

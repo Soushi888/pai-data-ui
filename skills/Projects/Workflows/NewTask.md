@@ -7,7 +7,7 @@ Create a new task and link it to an existing project.
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Creating a new task in the Projects skill.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Creating a new task in the Projects skill.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
@@ -17,13 +17,13 @@ curl -s -X POST http://localhost:8888/notify \
 
 If a project id is provided in args, validate it exists:
 ```bash
-ls "$HOME/.claude/PAI/USER/DATA/PM/projects/{proj-id}.md" 2>/dev/null
+ls "$PAI_DATA_ROOT/PM/projects/{proj-id}.md" 2>/dev/null
 ```
 
 Otherwise list active projects:
 ```bash
 YQ="$HOME/go/bin/yq --front-matter=extract"
-DATA="$HOME/.claude/PAI/USER/DATA/PM"
+DATA="$PAI_DATA_ROOT/PM"
 for f in "$DATA/projects"/proj-*.md; do
   [ -f "$f" ] || continue
   $YQ '{id: .id, title: .title, status: .status}' "$f" 2>/dev/null
@@ -57,11 +57,11 @@ If no external ref, omit the field from the frontmatter entirely (do not write e
 
 ### 5. Write Task File
 
-Copy from `~/.claude/PAI/USER/DATA/_templates/task.md`.
+Copy from `$PAI_DATA_ROOT/_templates/task.md`.
 
 Fill all fields. Set `time_logs: []`, `relations: []`, `tags: []`. Set `created` and `updated` to today.
 
-Write to `~/.claude/PAI/USER/DATA/PM/tasks/{id}.md`.
+Write to `$PAI_DATA_ROOT/PM/tasks/{id}.md`.
 
 Omit optional fields (`t_shirt_size`, `epic`, `external_ref`) entirely if not provided, rather than writing empty placeholder values.
 

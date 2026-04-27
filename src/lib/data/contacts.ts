@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { Effect } from "effect";
+import { Effect as E } from "effect";
 import type { DataError } from "./errors.js";
 import { FileNotFoundError, ParseError } from "./errors.js";
 import {
@@ -17,8 +17,8 @@ const filePath = (id: string) => `${dir()}/${id}.md`;
  * Lists all contacts from the SQLite index.
  * @returns Effect resolving to an array of Contact objects, or failing with DataError.
  */
-export function listContacts(): Effect.Effect<Contact[], DataError> {
-  return Effect.try({
+export function listContacts(): E.Effect<Contact[], DataError> {
+  return E.try({
     try: () => listByType<Contact>('contact'),
     catch: (e) => new ParseError({ file: dir(), cause: e }),
   })
@@ -31,7 +31,7 @@ export function listContacts(): Effect.Effect<Contact[], DataError> {
  */
 export function getContact(
   id: string,
-): Effect.Effect<EntityWithBody<Contact>, DataError> {
+): E.Effect<EntityWithBody<Contact>, DataError> {
   return requireEntity<Contact>(filePath(id), id);
 }
 
@@ -47,10 +47,10 @@ export function updateContact(
   id: string,
   patch: Partial<Contact>,
   body?: string,
-): Effect.Effect<Contact, DataError> {
-  return Effect.flatMap(getContact(id), ({ data, body: existingBody }) => {
+): E.Effect<Contact, DataError> {
+  return E.flatMap(getContact(id), ({ data, body: existingBody }) => {
     const updated = { ...data, ...patch };
-    return Effect.map(
+    return E.map(
       writeEntity(
         filePath(id),
         updated as unknown as Record<string, unknown>,
@@ -71,7 +71,7 @@ export function updateContact(
 export function createContact(
   data: Omit<Contact, "id" | "type" | "created">,
   body = "",
-): Effect.Effect<Contact, DataError> {
+): E.Effect<Contact, DataError> {
   const id = `contact-${data.name
     .toLowerCase()
     .replace(/\s+/g, "-")
@@ -83,9 +83,9 @@ export function createContact(
     created: new Date().toISOString().split("T")[0],
   };
   if (existsSync(filePath(id))) {
-    return Effect.fail(new FileNotFoundError({ id: "conflict" }));
+    return E.fail(new FileNotFoundError({ id: "conflict" }));
   }
-  return Effect.map(
+  return E.map(
     writeEntity(
       filePath(id),
       contact as unknown as Record<string, unknown>,

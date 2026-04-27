@@ -15,10 +15,10 @@ CUTOFF=$(date -d "-{N} days" +%Y-%m-%d)
 
 ### 2. Scan All Contacts
 
-For each `.md` file in `~/.claude/PAI/USER/DATA/CRM/contacts/`:
+For each `.md` file in `$PAI_DATA_ROOT/CRM/contacts/`:
 
 ```bash
-~/go/bin/yq --front-matter=extract '.last_contact' ~/.claude/PAI/USER/DATA/CRM/contacts/{file}.md
+~/go/bin/yq --front-matter=extract '.last_contact' $PAI_DATA_ROOT/CRM/contacts/{file}.md
 ```
 
 Compare the `last_contact` date string against the cutoff:
@@ -30,7 +30,7 @@ Sort results by `last_contact` ascending (oldest first).
 ### 3. For Qualifying Contacts, Extract Context
 
 ```bash
-~/go/bin/yq --front-matter=extract '{name: .name, organization: .organization, role: .role, last_contact: .last_contact, status: .status}' ~/.claude/PAI/USER/DATA/CRM/contacts/{file}.md
+~/go/bin/yq --front-matter=extract '{name: .name, organization: .organization, role: .role, last_contact: .last_contact, status: .status}' $PAI_DATA_ROOT/CRM/contacts/{file}.md
 ```
 
 ### 4. Render Follow-Up List

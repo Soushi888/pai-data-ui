@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect as E } from 'effect'
 import { listContacts } from '$lib/data/contacts.js'
 import { listExpenses } from '$lib/data/expenses.js'
 import { listIncome } from '$lib/data/income.js'
@@ -11,14 +11,14 @@ import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async () => {
   const [contacts, opps, orgs, invoices, projects, tasks, expenses, incomeList] = await Promise.all([
-    Effect.runPromise(Effect.either(listContacts())),
-    Effect.runPromise(Effect.either(listOpportunities())),
-    Effect.runPromise(Effect.either(listOrganizations())),
-    Effect.runPromise(Effect.either(listInvoices())),
-    Effect.runPromise(Effect.either(listProjects())),
-    Effect.runPromise(Effect.either(listTasks())),
-    Effect.runPromise(Effect.either(listExpenses())),
-    Effect.runPromise(Effect.either(listIncome()))
+    E.runPromise(E.either(listContacts())),
+    E.runPromise(E.either(listOpportunities())),
+    E.runPromise(E.either(listOrganizations())),
+    E.runPromise(E.either(listInvoices())),
+    E.runPromise(E.either(listProjects())),
+    E.runPromise(E.either(listTasks())),
+    E.runPromise(E.either(listExpenses())),
+    E.runPromise(E.either(listIncome()))
   ])
 
   return {

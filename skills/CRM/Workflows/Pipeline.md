@@ -7,16 +7,16 @@ List opportunities grouped by pipeline status.
 ### 1. Scan Opportunity Files
 
 ```bash
-ls ~/.claude/PAI/USER/DATA/CRM/opportunities/
+ls $PAI_DATA_ROOT/CRM/opportunities/
 ```
 
-If directory is empty: "No opportunities found. Use `crm:add-contact` and then create opportunities manually in `~/.claude/PAI/USER/DATA/CRM/opportunities/`."
+If directory is empty: "No opportunities found. Use `crm:add-contact` and then create opportunities manually in `$PAI_DATA_ROOT/CRM/opportunities/`."
 
 ### 2. Extract Status for Each File
 
 For each `.md` file in the opportunities directory:
 ```bash
-~/go/bin/yq --front-matter=extract '.status' ~/.claude/PAI/USER/DATA/CRM/opportunities/{file}.md
+~/go/bin/yq --front-matter=extract '.status' $PAI_DATA_ROOT/CRM/opportunities/{file}.md
 ```
 
 Group files by status bucket: `prospect`, `active`, `won`, `lost`, `on-hold`
@@ -24,7 +24,7 @@ Group files by status bucket: `prospect`, `active`, `won`, `lost`, `on-hold`
 ### 3. For Each Opportunity Extract Key Fields
 
 ```bash
-~/go/bin/yq --front-matter=extract '{title: .title, contact: .contact, organization: .organization, value_cad: .value_cad, updated: .updated}' ~/.claude/PAI/USER/DATA/CRM/opportunities/{file}.md
+~/go/bin/yq --front-matter=extract '{title: .title, contact: .contact, organization: .organization, value_cad: .value_cad, updated: .updated}' $PAI_DATA_ROOT/CRM/opportunities/{file}.md
 ```
 
 ### 4. Render Pipeline View

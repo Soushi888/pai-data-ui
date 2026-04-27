@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"build:binary": "bun build --compile scripts/launcher.ts --outfile pai-data-ui",
-		"start": "./pai-data-ui"
+		"start": "./pai-data-ui",
+		"rebuild-index": "bun scripts/rebuild-index.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.12",

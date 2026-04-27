@@ -9,7 +9,7 @@ The opportunity file is preserved intact. The project is a new entity with an `o
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Promoting an opportunity to a project in the Projects skill.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Promoting an opportunity to a project in the Projects skill.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
@@ -22,7 +22,7 @@ If an opportunity id is provided in args (e.g. `projects:promote opp-hrea-mainta
 Otherwise, list available opportunities:
 ```bash
 YQ="$HOME/go/bin/yq --front-matter=extract"
-for f in "$HOME/.claude/PAI/USER/DATA/CRM/opportunities"/opp-*.md; do
+for f in "$PAI_DATA_ROOT/CRM/opportunities"/opp-*.md; do
   [ -f "$f" ] || continue
   $YQ '{id: .id, title: .title, status: .status}' "$f" 2>/dev/null
 done
@@ -32,7 +32,7 @@ Ask which opportunity to promote.
 ### 2. Read Opportunity
 
 ```bash
-$YQ '.' "$HOME/.claude/PAI/USER/DATA/CRM/opportunities/{opp-id}.md"
+$YQ '.' "$PAI_DATA_ROOT/CRM/opportunities/{opp-id}.md"
 ```
 
 ### 3. Derive Project ID
@@ -62,14 +62,14 @@ Set `created` and `updated` to today's date.
 
 ### 6. Write Project File
 
-Write to `~/.claude/PAI/USER/DATA/PM/projects/{proj-id}.md`.
+Write to `$PAI_DATA_ROOT/PM/projects/{proj-id}.md`.
 
 **Do NOT modify the opportunity file.**
 
 ### 7. Create Context Folder
 
 ```bash
-mkdir -p "$HOME/.claude/PAI/USER/DATA/PM/context/{proj-id}"
+mkdir -p "$PAI_DATA_ROOT/PM/context/{proj-id}"
 ```
 
 ### 8. Confirm

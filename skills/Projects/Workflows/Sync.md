@@ -7,7 +7,7 @@ Update task statuses and log time. Three input modes auto-detected from context.
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Running the Sync workflow in the Projects skill.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Running the Sync workflow in the Projects skill.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
@@ -27,7 +27,7 @@ Inspect the invocation args and context to select mode:
 
 ```bash
 YQ="$HOME/go/bin/yq --front-matter=extract"
-DATA="$HOME/.claude/PAI/USER/DATA/PM"
+DATA="$PAI_DATA_ROOT/PM"
 for f in "$DATA/projects"/proj-*.md; do
   [ -f "$f" ] || continue
   $YQ '{id: .id, title: .title, status: .status}' "$f" 2>/dev/null
@@ -36,13 +36,28 @@ for f in "$DATA/tasks"/task-*.md; do
   [ -f "$f" ] || continue
   $YQ '{id: .id, project_id: .project_id, title: .title, status: .status}' "$f" 2>/dev/null
 done
+TODAY=$(date +%Y-%m-%d)
+FOCUS_FILE="$DATA/focus/focus-daily-$TODAY.md"
+if [ -f "$FOCUS_FILE" ]; then
+  $YQ '{items: .items}' "$FOCUS_FILE" 2>/dev/null
+fi
 ```
 
 Show current in-progress and blocked tasks grouped by project.
 
 ### Step 2: Ask What Was Worked On
 
-Ask: "What did you work on?"
+If today's focus list exists and has items with `linked_ref` matching known PM task IDs, surface them as context before asking:
+
+```
+Today's focus had these task-linked items:
+  ○ item-2   Review Tiki PR #157           -> task-tiki-pr157
+  ○ item-3   Investigate PAI memory leak   -> task-pai-memleak
+
+What did you work on?
+```
+
+If no linked items exist, ask the plain question: "What did you work on?"
 
 If user mentions a project by name or topic, focus that project's tasks. If vague, show in-progress tasks across all active projects and ask which ones moved.
 
@@ -70,6 +85,14 @@ For each confirmed task, use Read + Edit to:
 1. Update `status` in frontmatter
 2. Append entry to `time_logs` array: `{date: "YYYY-MM-DD", hours: N, notes: "..."}`
 3. Update `updated` to today
+
+After marking a task `done`, check today's focus list for any item where `linked_ref` matches that task id and `done: false`. If found, ask:
+
+```
+Focus item "item-2: Review Tiki PR #157" is linked to this task. Mark it done too? [y/N]
+```
+
+If confirmed, use Read + Edit to set `done: true` on that item and update the focus file's `updated` field.
 
 ---
 

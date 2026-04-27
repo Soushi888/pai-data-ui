@@ -2,6 +2,9 @@
 name: Projects
 description: Personal project and task management for the PAI data layer. Track active projects across freelance, OVN, and R&D contexts. Manage tasks with status, time logging, T-shirt sizing, and external references to GitHub/GitLab/Tiki. Sync progress multiple times per day via Socratic dialogue, session extraction, or direct input. Promote CRM opportunities to projects. USE WHEN projects, my projects, active projects, project status, add task, new task, task update, log time, time log, sync work, sync progress, what am I working on, promote opportunity, new project, create project, project dashboard, projects:dashboard, projects:new, projects:task, projects:sync, projects:log-time, projects:promote.
 argument-hint: [dashboard | new | task | sync | log-time | promote]
+category: personal
+feeds-into: []
+mcp-deps: []
 ---
 
 ## Customization
@@ -18,7 +21,7 @@ Fire a voice notification before any workflow execution:
 ```bash
 curl -s -X POST http://localhost:8888/notify \
   -H "Content-Type: application/json" \
-  -d '{"message": "Running the WORKFLOWNAME workflow in the Projects skill to ACTION.", "voice_id": "fTtv3eikoepIosk8dTZ5", "voice_enabled": true}' \
+  -d '{"message": "Running the WORKFLOWNAME workflow in the Projects skill to ACTION.", "voice_id": "OqTGHgPzbq47nVmGUnK2", "voice_enabled": true}' \
   > /dev/null 2>&1 &
 ```
 
@@ -35,15 +38,18 @@ curl -s -X POST http://localhost:8888/notify \
 
 ## Data Location
 
+> `$PAI_DATA_ROOT` is set via `.env` (default: `~/.claude/PAI/USER/DATA`).
+
 ```
-~/.claude/PAI/USER/DATA/PM/
+$PAI_DATA_ROOT/PM/
   projects/     proj-{id}.md files
   tasks/        task-{id}.md files (flat, linked by project_id)
   context/      proj-{id}/ folders for session notes and PR summaries
+  focus/        focus-daily-YYYY-MM-DD.md, focus-week-YYYY-WNN.md
 ```
 
-Schemas: `~/.claude/PAI/USER/DATA/_schemas/project.schema.json`, `task.schema.json`
-Templates: `~/.claude/PAI/USER/DATA/_templates/project.md`, `task.md`
+Schemas: `$PAI_DATA_ROOT/_schemas/project.schema.json`, `task.schema.json`, `focus-daily.schema.json`, `focus-week.schema.json`
+Templates: `$PAI_DATA_ROOT/_templates/project.md`, `task.md`
 
 ## Key Rules
 
@@ -51,5 +57,6 @@ Templates: `~/.claude/PAI/USER/DATA/_templates/project.md`, `task.md`
 - **ID matches filename**: `proj-hrea.md` has `id: "proj-hrea"`
 - **Soft references only**: `project_id`, `opportunity_ref`, contact refs are strings, not enforced FK
 - **External systems are source of truth**: PAI is the personal view layer, never a mirror
+- **Focus awareness**: Focus items link to tasks via soft `linked_ref`; Dashboard shows today's focus; Sync primes context from active focus items
 - **yq for frontmatter reads**: `~/go/bin/yq --front-matter=extract`
 - **rg for search**: `rg -il` for full-text, `rg -l` for file-level matches

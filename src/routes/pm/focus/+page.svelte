@@ -1,6 +1,8 @@
 <script lang="ts">
   import FocusListPanel from '$lib/components/pm/FocusListPanel.svelte'
   import FocusHistory from '$lib/components/pm/FocusHistory.svelte'
+  import PrepareTomorrowButton from '$lib/components/pm/PrepareTomorrowButton.svelte'
+  import UnfinishedNavigator from '$lib/components/pm/UnfinishedNavigator.svelte'
 
   let { data } = $props()
 </script>
@@ -11,9 +13,16 @@
 
 <div class="flex gap-6 p-6">
   <div class="flex flex-1 flex-col gap-6">
-    <header>
-      <h1 class="text-lg font-semibold text-gray-100">Focus</h1>
-      <p class="text-xs text-gray-500">Daily and weekly objectives</p>
+    <header class="flex items-center justify-between">
+      <div>
+        <h1 class="text-lg font-semibold text-gray-100">Focus</h1>
+        <p class="text-xs text-gray-500">Daily and weekly objectives</p>
+      </div>
+      <PrepareTomorrowButton
+        tomorrowExists={data.tomorrowExists}
+        tomorrowId={data.tomorrowId}
+        tomorrowDate={data.tomorrowDate}
+      />
     </header>
 
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -30,6 +39,8 @@
         label="This Week"
       />
     </div>
+
+    <UnfinishedNavigator initialGroups={data.initialUnfinished} />
   </div>
 
   <div class="w-40 flex-shrink-0">

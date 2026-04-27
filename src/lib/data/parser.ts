@@ -1,6 +1,6 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Effect } from "effect";
+import { Effect as E } from "effect";
 import matter from "gray-matter";
 import { FileNotFoundError, ParseError, WriteError } from "./errors.js";
 import type { EntityWithBody } from "./types.js";
@@ -37,8 +37,8 @@ export function dataPath(...segments: string[]): string {
  */
 export function readEntity<T>(
   filePath: string,
-): Effect.Effect<EntityWithBody<T>, ParseError> {
-  return Effect.tryPromise({
+): E.Effect<EntityWithBody<T>, ParseError> {
+  return E.tryPromise({
     try: async () => {
       const raw = await readFile(filePath, "utf8");
       const { data, content } = matter(raw);
@@ -60,15 +60,15 @@ export function writeEntity<T extends Record<string, unknown>>(
   filePath: string,
   data: T,
   body: string,
-): Effect.Effect<void, WriteError> {
-  return Effect.tap(
-    Effect.tryPromise({
+): E.Effect<void, WriteError> {
+  return E.tap(
+    E.tryPromise({
       try: () => writeFile(filePath, matter.stringify(body || "", data), "utf8"),
       catch: (e) => new WriteError({ file: filePath, cause: e }),
     }),
     () => {
       try { _writeHook?.(filePath, data as Record<string, unknown>, body) } catch { /* best effort */ }
-      return Effect.void
+      return E.void
     }
   )
 }
@@ -78,8 +78,8 @@ export function writeEntity<T extends Record<string, unknown>>(
  * @param dir - Absolute path to the directory to read.
  * @returns Effect resolving to an array of absolute .md file paths, or failing with ParseError on I/O failure.
  */
-export function listDir(dir: string): Effect.Effect<string[], ParseError> {
-  return Effect.tryPromise({
+export function listDir(dir: string): E.Effect<string[], ParseError> {
+  return E.tryPromise({
     try: async () => {
       const entries = await readdir(dir);
       return entries.filter((f) => f.endsWith(".md")).map((f) => join(dir, f));
@@ -102,8 +102,8 @@ export function entityId(filePath: string): string {
  * @param filePath - Absolute path to the file to read.
  * @returns Effect resolving to the raw file contents, or failing with ParseError on I/O failure.
  */
-export function readRaw(filePath: string): Effect.Effect<string, ParseError> {
-  return Effect.tryPromise({
+export function readRaw(filePath: string): E.Effect<string, ParseError> {
+  return E.tryPromise({
     try: () => readFile(filePath, "utf8"),
     catch: (e) => new ParseError({ file: filePath, cause: e }),
   });
@@ -118,8 +118,8 @@ export function readRaw(filePath: string): Effect.Effect<string, ParseError> {
 export function writeRaw(
   filePath: string,
   content: string,
-): Effect.Effect<void, WriteError> {
-  return Effect.tryPromise({
+): E.Effect<void, WriteError> {
+  return E.tryPromise({
     try: () => writeFile(filePath, content, "utf8"),
     catch: (e) => new WriteError({ file: filePath, cause: e }),
   });
@@ -135,8 +135,8 @@ export function writeRaw(
 export function requireEntity<T>(
   filePath: string,
   id: string,
-): Effect.Effect<EntityWithBody<T>, ParseError | FileNotFoundError> {
-  return Effect.catchAll(readEntity<T>(filePath), () =>
-    Effect.fail(new FileNotFoundError({ id })),
+): E.Effect<EntityWithBody<T>, ParseError | FileNotFoundError> {
+  return E.catchAll(readEntity<T>(filePath), () =>
+    E.fail(new FileNotFoundError({ id })),
   );
 }

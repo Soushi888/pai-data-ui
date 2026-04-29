@@ -7,6 +7,7 @@ import { listOpportunities } from '$lib/data/opportunities.js'
 import { listOrganizations } from '$lib/data/organizations.js'
 import { listProjects } from '$lib/data/projects.js'
 import { listTasks } from '$lib/data/tasks.js'
+import { getDb } from '$lib/server/index-db.js'
 import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async () => {
@@ -21,6 +22,8 @@ export const load: LayoutServerLoad = async () => {
     E.runPromise(E.either(listIncome()))
   ])
 
+  const vfCount = (getDb().prepare('SELECT count(*) as n FROM vf_economic_events').get() as { n: number }).n
+
   return {
     counts: {
       contacts: contacts._tag === 'Right' ? contacts.right.length : 0,
@@ -30,7 +33,8 @@ export const load: LayoutServerLoad = async () => {
       projects: projects._tag === 'Right' ? projects.right.filter((p) => p.status !== 'archived').length : 0,
       tasks: tasks._tag === 'Right' ? tasks.right.length : 0,
       expenses: expenses._tag === 'Right' ? expenses.right.filter((e) => e.status === 'active').length : 0,
-      income: incomeList._tag === 'Right' ? incomeList.right.length : 0
+      income: incomeList._tag === 'Right' ? incomeList.right.length : 0,
+      vfEvents: vfCount
     }
   }
 }

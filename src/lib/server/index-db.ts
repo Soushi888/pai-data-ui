@@ -124,7 +124,7 @@ function initVfViews(db: BetterSqlite3.Database): void {
         json_extract(data, '$.vf_has_point_in_time')              AS point_in_time,
         updated
       FROM entities
-      WHERE type IN ('task', 'expense', 'income');
+      WHERE type IN ('task', 'expense', 'income', 'economic-event');
 
     DROP VIEW IF EXISTS vf_process_flows;
     CREATE VIEW vf_process_flows AS
@@ -162,11 +162,11 @@ function initVfViews(db: BetterSqlite3.Database): void {
     CREATE VIEW vf_claim_status AS
       SELECT
         id,
-        json_extract(data, '$.title')                             AS title,
-        json_extract(data, '$.vf_resource_quantity.numericValue') AS claimed_amount,
-        json_extract(data, '$.vf_resource_quantity.unit')          AS currency,
-        json_extract(data, '$.client')                            AS client,
-        json_extract(data, '$.vf_settled_by')                     AS settled_by,
+        COALESCE(json_extract(data, '$.number'), json_extract(data, '$.title'), id) AS title,
+        json_extract(data, '$.vf_resource_quantity.numericValue')                    AS claimed_amount,
+        COALESCE(json_extract(data, '$.currency'), json_extract(data, '$.vf_resource_quantity.unit')) AS currency,
+        COALESCE(json_extract(data, '$.organization'), json_extract(data, '$.client'))                AS client,
+        json_extract(data, '$.vf_settled_by')                                        AS settled_by,
         CASE
           WHEN json_array_length(json_extract(data, '$.vf_settled_by')) > 0
           THEN 'settled'

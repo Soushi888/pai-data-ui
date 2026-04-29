@@ -15,6 +15,7 @@
         tasks: number;
         expenses: number;
         income: number;
+        vfEvents: number;
     }
 
     interface Props {
@@ -49,6 +50,13 @@
                 { href: "/pm", label: "Active Projects", count: () => counts.projects },
                 { href: "/pm/tasks", label: "Tasks", count: () => counts.tasks },
                 { href: "/pm/focus", label: "Focus", count: () => null },
+            ],
+        },
+        {
+            label: "ValueFlows",
+            items: [
+                { href: "/vf", label: "Dashboard", count: () => counts.vfEvents },
+                { href: "/vf/balance", label: "Balance", count: () => null },
             ],
         },
     ];

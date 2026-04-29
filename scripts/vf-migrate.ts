@@ -31,7 +31,7 @@ const OVERLAYS: Record<string, Overlay> = {
     vf_resource_quantity:
       data.vf_resource_quantity ??
       (data.amount != null
-        ? { numericValue: data.amount, unit: data.currency ?? 'EUR' }
+        ? { numericValue: data.amount, unit: data.currency ?? 'CAD' }
         : null),
     vf_resource_conforms_to: data.vf_resource_conforms_to ?? null,
     vf_has_point_in_time:
@@ -45,7 +45,7 @@ const OVERLAYS: Record<string, Overlay> = {
     vf_resource_quantity:
       data.vf_resource_quantity ??
       (data.amount != null
-        ? { numericValue: data.amount, unit: data.currency ?? 'EUR' }
+        ? { numericValue: data.amount, unit: data.currency ?? 'CAD' }
         : null),
     vf_resource_conforms_to: data.vf_resource_conforms_to ?? 'rspec-eur',
     vf_has_point_in_time:
@@ -58,7 +58,7 @@ const OVERLAYS: Record<string, Overlay> = {
     vf_resource_quantity:
       data.vf_resource_quantity ??
       (data.total != null
-        ? { numericValue: data.total, unit: data.currency ?? 'EUR' }
+        ? { numericValue: data.total, unit: data.currency ?? 'CAD' }
         : null),
   }),
   project: (data) => ({

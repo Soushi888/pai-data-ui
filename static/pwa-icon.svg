@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1e3a8a"/>
+  <rect x="48" y="48" width="416" height="416" rx="64" fill="#0f172a"/>
+  <!-- PAI hexagon grid pattern -->
+  <g fill="#1e3a8a" opacity="0.4">
+    <polygon points="256,80 296,102 296,148 256,170 216,148 216,102"/>
+    <polygon points="160,134 200,156 200,202 160,224 120,202 120,156"/>
+    <polygon points="352,134 392,156 392,202 352,224 312,202 312,156"/>
+    <polygon points="256,188 296,210 296,256 256,278 216,256 216,210"/>
+    <polygon points="160,242 200,264 200,310 160,332 120,310 120,264"/>
+    <polygon points="352,242 392,264 392,310 352,332 312,310 312,264"/>
+    <polygon points="256,296 296,318 296,364 256,386 216,364 216,318"/>
+    <polygon points="160,350 200,372 200,418 160,440 120,418 120,372"/>
+    <polygon points="352,350 392,372 392,418 352,440 312,418 312,372"/>
+  </g>
+  <!-- PAI text -->
+  <g fill="#93c5fd">
+    <!-- P -->
+    <rect x="148" y="192" width="20" height="128" rx="4"/>
+    <rect x="148" y="192" width="56" height="20" rx="4"/>
+    <rect x="148" y="248" width="56" height="20" rx="4"/>
+    <rect x="184" y="192" width="20" height="76" rx="4"/>
+    <!-- A -->
+    <polygon points="256,192 236,320 256,320 256,260 276,260 276,320 296,320 276,192" fill="#93c5fd"/>
+    <rect x="242" y="248" width="28" height="16" rx="3"/>
+    <!-- I -->
+    <rect x="316" y="192" width="20" height="128" rx="4"/>
+    <rect x="304" y="192" width="44" height="20" rx="4"/>
+    <rect x="304" y="300" width="44" height="20" rx="4"/>
+  </g>
+  <!-- Accent dots -->
+  <circle cx="256" cy="420" r="8" fill="#3b82f6"/>
+  <circle cx="232" cy="420" r="5" fill="#1d4ed8"/>
+  <circle cx="280" cy="420" r="5" fill="#1d4ed8"/>
+</svg>

@@ -27,6 +27,13 @@
 
     const navSections = [
         {
+            label: "TELOS",
+            items: [
+                { href: "/telos", label: "Explorer", count: () => null },
+                { href: "/chat", label: "SoushAI Chat", count: () => null },
+            ],
+        },
+        {
             label: "CRM",
             items: [
                 { href: "/crm", label: "Contacts", count: () => counts.contacts },

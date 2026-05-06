@@ -1,1 +1,14 @@
 @import 'tailwindcss';
+
+:root {
+  --athanor-bg:        #0a0b0f;
+  --athanor-surface:   #111218;
+  --athanor-border:    #1e2030;
+  --athanor-gold:      #c9a84c;
+  --athanor-ember:     #e8622a;
+  --athanor-arcane:    #7b6fc4;
+  --athanor-mist:      #8892a4;
+  --athanor-chalk:     #d4dae6;
+  --athanor-diff-add:  rgba(74, 222, 128, 0.12);
+  --athanor-diff-rem:  rgba(248, 113, 113, 0.12);
+}

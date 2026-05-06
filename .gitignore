@@ -30,3 +30,6 @@ vite.config.ts.timestamp-*
 # Compiled binary
 /pai-data-ui
 Plans/
+
+# Demo data index (auto-generated)
+demo-data/_index/

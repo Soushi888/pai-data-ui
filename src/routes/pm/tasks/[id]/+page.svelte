@@ -3,6 +3,8 @@
   import TagList from '$lib/components/shared/TagList.svelte'
   import ChipsInput from '$lib/components/shared/ChipsInput.svelte'
   import MarkdownViewer from '$lib/components/shared/MarkdownViewer.svelte'
+  import TimeEntryRow from '$lib/components/time/TimeEntryRow.svelte'
+  import TimeEntryForm from '$lib/components/time/TimeEntryForm.svelte'
   import { invalidateAll } from '$app/navigation'
 
   let { data } = $props()
@@ -18,14 +20,18 @@
   let saved = $state(false)
   let snapshot: { title: string; status: 'todo' | 'in-progress' | 'done' | 'blocked'; priority: 'low' | 'medium' | 'high' | 'critical'; t_shirt_size: string; epic: string; tags: string[] } | null = null
 
-  let logDate = $state(new Date().toISOString().split('T')[0])
-  let logHours = $state<number>(1)
-  let logNotes = $state('')
-  let logging = $state(false)
+  let showLogForm = $state(false)
+  let addingToFocus = $state(false)
+  let addedToFocus = $state<'added' | 'already' | null>(null)
 
-  const totalHours = $derived(
-    (data.task.time_logs ?? []).reduce((s, l) => s + (Number(l.hours) || 0), 0)
-  )
+  async function addToFocus() {
+    addingToFocus = true
+    const res = await fetch(`/api/tasks/${data.task.id}/add-to-focus`, { method: 'POST' })
+    const body = await res.json()
+    addingToFocus = false
+    addedToFocus = body.already ? 'already' : 'added'
+    setTimeout(() => (addedToFocus = null), 3000)
+  }
 
   const inputClass = () =>
     `border text-gray-200 rounded px-3 py-2 text-sm w-full focus:outline-none transition-colors ${editing ? 'bg-gray-800 border-gray-700 focus:border-blue-500' : 'border-transparent bg-transparent cursor-default'}`
@@ -70,17 +76,8 @@
     setTimeout(() => (saved = false), 2000)
   }
 
-  async function logTime(e: Event) {
-    e.preventDefault()
-    if (!logHours || logHours <= 0) return
-    logging = true
-    await fetch(`/api/tasks/${data.task.id}/time-log`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: logDate, hours: logHours, notes: logNotes || undefined })
-    })
-    logNotes = ''
-    logging = false
+  async function handleLogSuccess() {
+    showLogForm = false
     await invalidateAll()
   }
 </script>
@@ -95,6 +92,16 @@
     <StatusBadge status={data.task.status} />
     <StatusBadge status={data.task.priority} />
     <div class="ml-auto flex gap-2">
+      <button
+        onclick={addToFocus}
+        disabled={addingToFocus}
+        class="text-xs px-3 py-1.5 rounded transition-colors
+          {addedToFocus === 'added' ? 'bg-green-900/50 text-green-400' :
+           addedToFocus === 'already' ? 'bg-gray-800 text-gray-500' :
+           'bg-gray-800 text-gray-400 hover:bg-gray-700'}"
+      >
+        {addingToFocus ? '…' : addedToFocus === 'added' ? '✓ Added to Focus' : addedToFocus === 'already' ? 'Already in Focus' : '+ Focus'}
+      </button>
       <a href="/pm/tasks/{data.task.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
       {#if !editing}
         <button
@@ -189,51 +196,47 @@
     </div>
 
     <div>
-      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-        Time Logs <span class="text-gray-600 font-normal normal-case">— {totalHours}h total</span>
-      </h2>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+          Time Entries <span class="text-gray-600 font-normal normal-case">— {data.totalHours}h total</span>
+        </h2>
+        <div class="flex gap-2">
+          <a href="/time?task={data.task.id}" class="text-xs text-gray-500 hover:text-gray-300">See all</a>
+          <button onclick={() => (showLogForm = !showLogForm)} class="text-xs px-2 py-1 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">
+            {showLogForm ? 'Cancel' : '+ Log'}
+          </button>
+        </div>
+      </div>
 
-      {#if (data.task.time_logs ?? []).length > 0}
-        <table class="w-full text-sm mb-4">
+      {#if showLogForm}
+        <div class="mb-4">
+          <TimeEntryForm
+            taskId={data.task.id}
+            projectId={data.task.project_id}
+            onSuccess={handleLogSuccess}
+          />
+        </div>
+      {/if}
+
+      {#if data.timeEntries.length > 0}
+        <table class="w-full text-sm mb-2">
           <thead>
-            <tr class="text-gray-500 text-left">
+            <tr class="text-gray-500 text-left text-xs">
               <th class="pb-2 font-normal">Date</th>
-              <th class="pb-2 font-normal">Hours</th>
-              <th class="pb-2 font-normal">Notes</th>
+              <th class="pb-2 font-normal">Description</th>
+              <th class="pb-2 font-normal text-right">Hours</th>
+              <th class="pb-2 font-normal">Category</th>
             </tr>
           </thead>
           <tbody>
-            {#each [...(data.task.time_logs ?? [])].reverse() as log}
-              <tr class="border-t border-gray-800">
-                <td class="py-2 text-gray-400 tabular-nums">{log.date}</td>
-                <td class="py-2 text-blue-400 tabular-nums">{Number(log.hours) || '?'}h</td>
-                <td class="py-2 text-gray-500 text-xs">{log.notes ?? ''}</td>
-              </tr>
+            {#each data.timeEntries as entry (entry.id)}
+              <TimeEntryRow {entry} showTask={false} showProject={false} />
             {/each}
           </tbody>
         </table>
       {:else}
         <p class="text-gray-600 text-xs mb-4">No time logged yet.</p>
       {/if}
-
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-      <form onsubmit={logTime} onkeydown={(e) => { if (e.ctrlKey && e.key === 'Enter') e.currentTarget.requestSubmit() }} class="flex gap-2 items-end">
-        <div>
-          <label class="text-xs text-gray-500 block mb-1">Date</label>
-          <input type="date" bind:value={logDate} class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
-        </div>
-        <div>
-          <label class="text-xs text-gray-500 block mb-1">Hours</label>
-          <input type="number" bind:value={logHours} min="0.25" step="0.25" class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-24" />
-        </div>
-        <div class="flex-1">
-          <label class="text-xs text-gray-500 block mb-1">Notes</label>
-          <input bind:value={logNotes} placeholder="What did you work on?" class="bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 w-full" />
-        </div>
-        <button type="submit" disabled={logging} class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
-          {logging ? '…' : '+ Log'}
-        </button>
-      </form>
     </div>
   </div>
 </div>

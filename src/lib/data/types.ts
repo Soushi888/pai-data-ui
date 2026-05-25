@@ -154,16 +154,6 @@ export interface ExternalRef {
   label?: string;
 }
 
-/** A single work session logged against a task. */
-export interface TimeLogEntry {
-  /** ISO date (YYYY-MM-DD) the work was performed. */
-  date: string;
-  /** Duration in decimal hours, e.g. 1.5 for 90 minutes. */
-  hours: number;
-  /** Optional description of the work done in this session. */
-  notes?: string;
-}
-
 /** A directional relationship between two tasks. */
 export interface TaskRelation {
   /** Relationship kind: blocks, blocked-by, or related. */
@@ -224,8 +214,6 @@ export interface Task {
   external_ref?: ExternalRef;
   /** Optional directional relationships to other tasks. */
   relations?: TaskRelation[];
-  /** Accumulated work sessions logged against this task. */
-  time_logs?: TimeLogEntry[];
   /** Optional categorization labels. */
   tags?: string[];
   /** ISO date (YYYY-MM-DD) when the task was created. */
@@ -396,6 +384,43 @@ export interface FocusWeek {
 
 /** Discriminated union of all focus list variants. */
 export type FocusList = FocusDaily | FocusWeek;
+
+// ── Time ─────────────────────────────────────────────────────────────────────
+
+/** Work category for a time entry. */
+export type TimeCategory = 'billable' | 'r&d' | 'marketing' | 'internal' | 'training' | 'sales'
+
+/** A discrete unit of time worked, linked to a project and optionally a task. */
+export interface TimeEntry {
+  /** Unique identifier, e.g. "te-2026-04-17-evoludata-tiki-sss". */
+  id: string;
+  /** Discriminant. Always "time-entry". */
+  type: 'time-entry';
+  /** ISO date (YYYY-MM-DD) the work was performed. */
+  date: string;
+  /** Actual time worked in minutes (source of truth). */
+  minutes: number;
+  /** Hours rounded to nearest 0.25 for billing. Derived from minutes. */
+  hours_rounded: number;
+  /** Description of the work done. */
+  description: string;
+  /** Soft reference to the parent project (proj-*). */
+  project_id: string;
+  /** Optional soft reference to the parent task (task-*). */
+  task_id?: string;
+  /** Soft reference to the ERP invoice (inv-*), or null if unbilled. */
+  invoice_id?: string | null;
+  /** Optional soft reference to a CRM contact for client context. */
+  contact_id?: string;
+  /** Work category for billing and reporting. */
+  category: TimeCategory;
+  /** Categorization labels. */
+  tags: string[];
+  /** ISO date (YYYY-MM-DD) when the record was created. */
+  created: string;
+  /** ISO date (YYYY-MM-DD) of the last modification. */
+  updated: string;
+}
 
 // ── PM / Focus — Navigator ────────────────────────────────────────────────────
 

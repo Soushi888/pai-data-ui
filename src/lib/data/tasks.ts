@@ -3,7 +3,7 @@ import type { DataError } from './errors.js'
 import { ParseError } from './errors.js'
 import { dataPath, requireEntity, writeEntity } from './parser.js'
 import { listByType } from '$lib/server/index-db.js'
-import type { EntityWithBody, Task, TimeLogEntry } from './types.js'
+import type { EntityWithBody, Task } from './types.js'
 
 const dir = () => dataPath('PM', 'tasks')
 const filePath = (id: string) => `${dir()}/${id}.md`
@@ -52,29 +52,6 @@ export function updateTask(
 }
 
 /**
- * Appends a time log entry to a task's time_logs array.
- * @param id - Task identifier.
- * @param entry - Time log entry to append (date, hours, optional notes).
- * @returns Effect resolving to the updated Task, or failing with DataError.
- */
-export function appendTimeLog(
-  id: string,
-  entry: TimeLogEntry
-): E.Effect<Task, DataError> {
-  return E.flatMap(getTask(id), ({ data, body }) => {
-    const updated: Task = {
-      ...data,
-      time_logs: [...(data.time_logs ?? []), entry],
-      updated: new Date().toISOString().split('T')[0]
-    }
-    return E.map(
-      writeEntity(filePath(id), updated as unknown as Record<string, unknown>, body),
-      () => updated
-    )
-  })
-}
-
-/**
  * Creates a new task.
  * @param data - Task fields to set.
  * @param body - Optional initial markdown body.
@@ -90,31 +67,3 @@ export function createTask(
   return E.map(writeEntity(filePath(id), task as unknown as Record<string, unknown>, body), () => task)
 }
 
-/**
- * Calculates the total hours logged across all time_logs entries for a task.
- * @param task - The task whose time logs to sum.
- * @returns Total hours as a number; returns 0 if no time logs exist.
- */
-export function totalHours(task: Task): number {
-  return (task.time_logs ?? []).reduce((sum, e) => sum + e.hours, 0)
-}
-
-/**
- * Calculates hours logged on a task since the most recent Monday (ISO week start).
- * @param task - The task whose time logs to filter.
- * @returns Hours logged in the current calendar week.
- */
-export function hoursThisWeek(task: Task): number {
-  const monday = getMonday()
-  return (task.time_logs ?? [])
-    .filter((e) => e.date >= monday)
-    .reduce((sum, e) => sum + e.hours, 0)
-}
-
-function getMonday(): string {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  return d.toISOString().split('T')[0]
-}

@@ -1,6 +1,7 @@
 import { Effect as E } from 'effect'
 import { listProjects } from '$lib/data/projects.js'
 import { listTasks } from '$lib/data/tasks.js'
+import { queryTimeEntries } from '$lib/server/index-db.js'
 import type { Task } from '$lib/data/types.js'
 import type { PageServerLoad } from './$types'
 
@@ -23,16 +24,18 @@ export const load: PageServerLoad = async () => {
   const monday = getMonday()
 
   const tasksByProject: Record<string, Task[]> = {}
-  const hoursThisWeek: Record<string, number> = {}
-
   for (const task of tasks) {
     if (!tasksByProject[task.project_id]) tasksByProject[task.project_id] = []
     tasksByProject[task.project_id].push(task)
+  }
 
-    const weekHours = (task.time_logs ?? [])
-      .filter((l) => l.date >= monday)
-      .reduce((s, l) => s + l.hours, 0)
-    hoursThisWeek[task.project_id] = (hoursThisWeek[task.project_id] ?? 0) + weekHours
+  const weekEntries = queryTimeEntries({ dateFrom: monday })
+  const hoursThisWeek: Record<string, number> = {}
+  for (const entry of weekEntries) {
+    const e = entry as { project_id?: string; hours_rounded?: number }
+    if (e.project_id) {
+      hoursThisWeek[e.project_id] = (hoursThisWeek[e.project_id] ?? 0) + (e.hours_rounded ?? 0)
+    }
   }
 
   return { projects, tasksByProject, hoursThisWeek }

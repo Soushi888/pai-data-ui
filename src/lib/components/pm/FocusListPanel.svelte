@@ -88,14 +88,31 @@
     await invalidateAll()
   }
 
+  function parseRef(raw: string): { text: string; linked_ref?: string } {
+    const match = raw.match(/\[\[([^\]]+)\]\]/)
+    if (!match) return { text: raw }
+    return {
+      text: raw.replace(/\s*\[\[[^\]]+\]\]\s*/, ' ').trim() || raw,
+      linked_ref: match[1],
+    }
+  }
+
   async function addItem(e: Event) {
     e.preventDefault()
     if (!list || !newItemText.trim()) return
     addingItem = true
-    const updated = [
-      ...localItems,
-      { id: `item-${localItems.length + 1}`, text: newItemText.trim(), done: false },
-    ]
+    const { text, linked_ref } = parseRef(newItemText.trim())
+    const maxNum = localItems.reduce((max, i) => {
+      const n = parseInt(i.id.replace('item-', ''), 10);
+      return isNaN(n) ? max : Math.max(max, n);
+    }, 0);
+    const newItem: FocusItemType = {
+      id: `item-${maxNum + 1}`,
+      text,
+      done: false,
+      ...(linked_ref ? { linked_ref } : {}),
+    }
+    const updated = [...localItems, newItem]
     await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -159,10 +176,13 @@
     editingId = id
   }
 
-  async function saveEdit(id: string, text: string) {
+  async function saveEdit(id: string, raw: string) {
     if (!list) return
     editingId = null
-    const updated = localItems.map((i) => i.id === id ? { ...i, text } : i)
+    const { text, linked_ref } = parseRef(raw)
+    const updated = localItems.map((i) =>
+      i.id === id ? { ...i, text, ...(linked_ref ? { linked_ref } : {}) } : i
+    )
     localItems = updated
     await fetch(`/api/focus/${listId}`, {
       method: 'PATCH',
@@ -174,6 +194,18 @@
 
   function cancelEdit() {
     editingId = null
+  }
+
+  async function deleteItem(itemId: string) {
+    if (!list) return
+    const updated = localItems.filter((i) => i.id !== itemId)
+    localItems = updated
+    await fetch(`/api/focus/${listId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: updated }),
+    })
+    await invalidateAll()
   }
 </script>
 
@@ -234,6 +266,7 @@
           onEditStart={startEdit}
           onEditSave={saveEdit}
           onEditCancel={cancelEdit}
+          onDelete={deleteItem}
         />
       {/each}
     </ul>

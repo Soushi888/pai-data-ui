@@ -198,7 +198,11 @@ export function addItem(
   linkedRef?: string,
 ): E.Effect<FocusList, DataError> {
   return E.flatMap(getFocusList(id), ({ data, body }) => {
-    const nextId = `item-${data.items.length + 1}`;
+    const maxNum = data.items.reduce((max, item) => {
+      const n = parseInt(item.id.replace('item-', ''), 10);
+      return isNaN(n) ? max : Math.max(max, n);
+    }, 0);
+    const nextId = `item-${maxNum + 1}`;
     const newItem: FocusItem = {
       id: nextId,
       text,

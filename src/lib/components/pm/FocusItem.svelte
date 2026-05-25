@@ -35,6 +35,8 @@
         onEditCancel?: () => void;
         /** When true, disables interactions (archived list). */
         disabled?: boolean;
+        /** Callback to delete this item. */
+        onDelete?: (id: string) => void;
     };
 
     let {
@@ -52,14 +54,32 @@
         onEditSave,
         onEditCancel,
         disabled = false,
+        onDelete,
     }: Props = $props();
 
     let editText = $state(item.text);
+
+    function parseTextParts(text: string): Array<{ type: 'text' | 'ref'; value: string }> {
+        const parts: Array<{ type: 'text' | 'ref'; value: string }> = []
+        const regex = /\[\[([^\]]+)\]\]/g
+        let last = 0, m: RegExpExecArray | null
+        while ((m = regex.exec(text)) !== null) {
+            if (m.index > last) parts.push({ type: 'text', value: text.slice(last, m.index) })
+            parts.push({ type: 'ref', value: m[1] })
+            last = regex.lastIndex
+        }
+        if (last < text.length) parts.push({ type: 'text', value: text.slice(last) })
+        return parts
+    }
+
+    const textParts = $derived(parseTextParts(item.text))
     let inputEl = $state<HTMLInputElement | null>(null);
 
     $effect(() => {
         if (editing) {
-            editText = item.text;
+            editText = item.linked_ref
+                ? `${item.text} [[${item.linked_ref}]]`
+                : item.text;
             inputEl?.focus();
             inputEl?.select();
         }
@@ -78,7 +98,9 @@
     function handleEditKeydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
             e.preventDefault();
-            onEditSave?.(item.id, editText.trim() || item.text);
+            const trimmed = editText.trim();
+            if (!trimmed) { onEditCancel?.(); return; }
+            onEditSave?.(item.id, trimmed);
         } else if (e.key === "Escape") {
             onEditCancel?.();
         }
@@ -97,7 +119,7 @@
 </script>
 
 <li
-    class="relative flex items-start gap-2 rounded px-2 py-1.5 transition-colors hover:bg-gray-700/50 {isDragging
+    class="group relative flex items-start gap-2 rounded px-2 py-1.5 transition-colors hover:bg-gray-700/50 {isDragging
         ? 'opacity-40'
         : ''}"
     ondragover={handleDragOver}
@@ -176,7 +198,11 @@
             bind:value={editText}
             class="flex-1 rounded bg-gray-700 px-1.5 py-0.5 text-sm text-gray-200 outline-none focus:ring-1 focus:ring-blue-500"
             onkeydown={handleEditKeydown}
-            onblur={() => onEditSave?.(item.id, editText.trim() || item.text)}
+            onblur={() => {
+                const trimmed = editText.trim();
+                if (!trimmed) onEditCancel?.();
+                else onEditSave?.(item.id, trimmed);
+            }}
         />
     {:else}
         <span
@@ -193,9 +219,26 @@
                 ? ""
                 : "Double-click to edit"}
         >
-            {item.text}
-            <WikiLink ref={item.linked_ref} />
+            {#each textParts as part}
+                {#if part.type === 'ref'}
+                    <WikiLink ref={part.value} />
+                {:else}
+                    {part.value}
+                {/if}
+            {/each}
+            {#if item.linked_ref && !item.text.includes(`[[${item.linked_ref}]]`)}
+                <WikiLink ref={item.linked_ref} />
+            {/if}
         </span>
+    {/if}
+
+    {#if !disabled && onDelete}
+        <button
+            class="ml-auto shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-red-400 text-sm cursor-pointer leading-none px-1"
+            onclick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+            aria-label="Delete item"
+            tabindex="-1"
+        >×</button>
     {/if}
 
     {#if showBelow}

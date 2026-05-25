@@ -3,6 +3,7 @@ import { listContacts } from '$lib/data/contacts.js'
 import { listInvoices } from '$lib/data/invoices.js'
 import { listProjects } from '$lib/data/projects.js'
 import { listTasks } from '$lib/data/tasks.js'
+import { queryTimeEntries } from '$lib/server/index-db.js'
 import type { PageServerLoad } from './$types'
 
 function getMonday(): string {
@@ -38,8 +39,8 @@ export const load: PageServerLoad = async () => {
   const outstanding = openInvoices.reduce((sum, i) => sum + i.total, 0)
   const activeProjects = allProjects.filter((p) => p.status === 'active')
   const inProgressTasks = allTasks.filter((t) => t.status === 'in-progress')
-  const hoursThisWeek = allTasks.reduce((sum, t) =>
-    sum + (t.time_logs ?? []).filter((l) => l.date >= monday).reduce((s, l) => s + l.hours, 0), 0)
+  const weekEntries = queryTimeEntries({ dateFrom: monday })
+  const hoursThisWeek = weekEntries.reduce((sum, e) => sum + ((e as { hours_rounded?: number }).hours_rounded ?? 0), 0)
 
   const followUpNeeded = allContacts
     .filter((c) => c.status === 'active' && c.last_contact && daysAgo(c.last_contact) > 30)

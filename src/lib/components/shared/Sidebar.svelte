@@ -27,6 +27,12 @@
 
     const navSections = [
         {
+            label: "PAI",
+            items: [
+                { href: "/skills", label: "Skills", count: () => null },
+            ],
+        },
+        {
             label: "TELOS",
             items: [
                 { href: "/telos", label: "Explorer", count: () => null },
@@ -57,6 +63,13 @@
                 { href: "/pm", label: "Active Projects", count: () => counts.projects },
                 { href: "/pm/tasks", label: "Tasks", count: () => counts.tasks },
                 { href: "/pm/focus", label: "Focus", count: () => null },
+            ],
+        },
+        {
+            label: "Time",
+            items: [
+                { href: "/time", label: "Entries", count: () => null },
+                { href: "/time/stats", label: "Stats", count: () => null },
             ],
         },
         {

@@ -10,19 +10,19 @@
 
   let { ref }: Props = $props()
 
-  const href = $derived(() => {
-    if (!ref) return null
-    if (ref.startsWith('task-')) return `/pm/tasks/${ref}`
-    if (ref.startsWith('proj-')) return `/pm/projects/${ref}`
-    if (ref.startsWith('contact-')) return `/crm/${ref}`
-    return null
-  })
+  const href = $derived(
+    !ref ? null :
+    ref.startsWith('task-') ? `/pm/tasks/${ref}` :
+    ref.startsWith('proj-') ? `/pm/projects/${ref}` :
+    ref.startsWith('contact-') ? `/crm/${ref}` :
+    null
+  )
 </script>
 
 {#if ref}
-  {#if href()}
+  {#if href}
     <a
-      href={href()}
+      href={href}
       class="ml-1 inline-block rounded bg-blue-900/40 px-1.5 py-0.5 font-mono text-xs text-blue-400 hover:bg-blue-900/70"
       onclick={(e) => e.stopPropagation()}
     >

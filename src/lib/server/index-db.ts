@@ -267,6 +267,68 @@ export function getByIdAndType<T>(
 }
 
 /**
+ * Queries time entries from the SQLite index with optional filtering.
+ * All filter params are ANDed together. Results ordered by date DESC.
+ */
+export function queryTimeEntries(opts: {
+  taskId?: string
+  projectId?: string
+  category?: string
+  dateFrom?: string
+  dateTo?: string
+  limit?: number
+} = {}): Record<string, unknown>[] {
+  let sql = `SELECT data FROM entities WHERE type = 'time-entry'`
+  const params: unknown[] = []
+
+  if (opts.taskId) {
+    sql += ` AND json_extract(data, '$.task_id') = ?`
+    params.push(opts.taskId)
+  }
+  if (opts.projectId) {
+    sql += ` AND json_extract(data, '$.project_id') = ?`
+    params.push(opts.projectId)
+  }
+  if (opts.category) {
+    sql += ` AND json_extract(data, '$.category') = ?`
+    params.push(opts.category)
+  }
+  if (opts.dateFrom) {
+    sql += ` AND json_extract(data, '$.date') >= ?`
+    params.push(opts.dateFrom)
+  }
+  if (opts.dateTo) {
+    sql += ` AND json_extract(data, '$.date') <= ?`
+    params.push(opts.dateTo)
+  }
+  sql += ` ORDER BY json_extract(data, '$.date') DESC`
+  if (opts.limit) sql += ` LIMIT ${opts.limit}`
+
+  const rows = getDb().prepare(sql).all(...params) as { data: string }[]
+  return rows.map((r) => JSON.parse(r.data))
+}
+
+/**
+ * Sums hours_rounded for all time entries of a given task.
+ */
+export function sumHoursForTask(taskId: string): number {
+  const row = getDb()
+    .prepare(`SELECT ROUND(SUM(json_extract(data,'$.hours_rounded')),2) as total FROM entities WHERE type='time-entry' AND json_extract(data,'$.task_id')=?`)
+    .get(taskId) as { total: number | null }
+  return row?.total ?? 0
+}
+
+/**
+ * Sums hours_rounded for all time entries of a given project.
+ */
+export function sumHoursForProject(projectId: string): number {
+  const row = getDb()
+    .prepare(`SELECT ROUND(SUM(json_extract(data,'$.hours_rounded')),2) as total FROM entities WHERE type='time-entry' AND json_extract(data,'$.project_id')=?`)
+    .get(projectId) as { total: number | null }
+  return row?.total ?? 0
+}
+
+/**
  * Performs a full-text search across the entities_fts virtual table using FTS5 MATCH syntax.
  * Returns ranked results with a snippet excerpt from the matched body field.
  * @param query - FTS5 query string (e.g. "john" or "tag:design").

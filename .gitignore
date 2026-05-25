@@ -30,6 +30,10 @@ vite.config.ts.timestamp-*
 # Compiled binary
 /pai-data-ui
 Plans/
+.codegraph
 
 # Demo data index (auto-generated)
 demo-data/_index/
+
+# System config files (root-owned, not for repo)
+sysctl

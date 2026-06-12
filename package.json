@@ -52,6 +52,7 @@
 		"gray-matter": "^4.0.3",
 		"layerchart": "^1.0.13",
 		"marked": "^18.0.2",
-		"pdfkit": "^0.18.0"
+		"pdfkit": "^0.18.0",
+		"smol-toml": "^1.6.1"
 	}
 }

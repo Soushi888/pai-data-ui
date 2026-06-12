@@ -2,6 +2,7 @@ import type { Handle } from '@sveltejs/kit'
 import { registerWriteHook } from '$lib/data/parser.js'
 import { domainFromPath, getDb, upsertEntityInDb } from '$lib/server/index-db.js'
 import { syncEngine } from '$lib/server/sync-engine.js'
+import { cronEngine } from '$lib/server/cron.js'
 
 registerWriteHook((filePath, data, body) => {
   if (!data.id || !data.type) return
@@ -15,6 +16,7 @@ registerWriteHook((filePath, data, body) => {
 })
 
 syncEngine.start()
+cronEngine().start()
 
 export const handle: Handle = async ({ event, resolve }) => {
   return resolve(event)

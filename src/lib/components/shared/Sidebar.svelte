@@ -30,6 +30,7 @@
             label: "PAI",
             items: [
                 { href: "/skills", label: "Skills", count: () => null },
+                { href: "/jobs", label: "Cron Jobs", count: () => null },
             ],
         },
         {

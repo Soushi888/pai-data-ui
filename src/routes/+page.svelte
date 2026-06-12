@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enhance } from '$app/forms'
   import StatusBadge from '$lib/components/shared/StatusBadge.svelte'
 
   let { data } = $props()
@@ -40,6 +41,7 @@
             <th class="pb-2 font-normal">Name</th>
             <th class="pb-2 font-normal">Organization</th>
             <th class="pb-2 font-normal">Last Contact</th>
+            <th class="pb-2 font-normal"></th>
           </tr>
         </thead>
         <tbody>
@@ -50,6 +52,17 @@
               </td>
               <td class="py-2 text-gray-400">{contact.organization}</td>
               <td class="py-2 text-gray-500">{contact.last_contact}</td>
+              <td class="py-2 text-right">
+                <form method="POST" action="?/markContacted" use:enhance>
+                  <input type="hidden" name="contactId" value={contact.id} />
+                  <button
+                    type="submit"
+                    class="text-xs px-2 py-1 rounded bg-gray-800 text-green-400 hover:bg-green-900/40 hover:text-green-300 border border-gray-700 hover:border-green-700 transition-colors"
+                  >
+                    ✓ Contacted today
+                  </button>
+                </form>
+              </td>
             </tr>
           {/each}
         </tbody>

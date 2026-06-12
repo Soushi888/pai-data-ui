@@ -79,6 +79,11 @@
     <StatusBadge status={data.contact.status} />
     <div class="ml-auto flex gap-2">
       <a href="/crm/contacts/{data.contact.id}/edit" class="text-xs px-3 py-1.5 rounded bg-gray-800 text-gray-400 hover:bg-gray-700 transition-colors">Edit Raw</a>
+      <button
+        onclick={markContactedToday}
+        disabled={saving}
+        class="text-xs px-3 py-1.5 rounded transition-colors bg-emerald-900/40 text-emerald-400 hover:bg-emerald-900/60 disabled:opacity-50"
+      >{saved ? 'Contacted ✓' : 'Mark contacted today'}</button>
       {#if !editing}
         <button
           onclick={startEdit}
@@ -142,9 +147,6 @@
         </button>
         <button onclick={cancel} disabled={saving} class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm px-4 py-2 rounded transition-colors disabled:opacity-50">
           Cancel
-        </button>
-        <button onclick={markContactedToday} class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-4 py-2 rounded transition-colors">
-          Mark contacted today
         </button>
       </div>
     {/if}

@@ -1,10 +1,11 @@
+import { fail } from '@sveltejs/kit'
 import { Effect as E } from 'effect'
-import { listContacts } from '$lib/data/contacts.js'
+import { listContacts, updateContact } from '$lib/data/contacts.js'
 import { listInvoices } from '$lib/data/invoices.js'
 import { listProjects } from '$lib/data/projects.js'
 import { listTasks } from '$lib/data/tasks.js'
 import { queryTimeEntries } from '$lib/server/index-db.js'
-import type { PageServerLoad } from './$types'
+import type { PageServerLoad, Actions } from './$types'
 
 function getMonday(): string {
   const d = new Date()
@@ -62,5 +63,19 @@ export const load: PageServerLoad = async () => {
     followUpNeeded,
     overdueInvoices,
     blockedTasks
+  }
+}
+
+export const actions: Actions = {
+  markContacted: async ({ request }) => {
+    const data = await request.formData()
+    const id = data.get('contactId')
+    if (!id || typeof id !== 'string') return fail(400, { error: 'Missing contactId' })
+
+    const today = new Date().toISOString().split('T')[0]
+    const result = await E.runPromise(E.either(updateContact(id, { last_contact: today })))
+    if (result._tag === 'Left') return fail(500, { error: 'Failed to update contact' })
+
+    return { success: true }
   }
 }

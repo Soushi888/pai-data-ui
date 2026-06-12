@@ -37,3 +37,9 @@ demo-data/_index/
 
 # System config files (root-owned, not for repo)
 sysctl
+
+# Local TLS certificates (private key — never commit)
+certs/
+
+# Runtime logs
+logs/

@@ -6,6 +6,7 @@
   import { invalidateAll } from '$app/navigation'
   import FocusItem from './FocusItem.svelte'
   import PrepareNextModal from './PrepareNextModal.svelte'
+  import { focusDrag } from './focusDnd.svelte.js'
   import type { FocusList, FocusItem as FocusItemType } from '$lib/data/types.js'
 
   export type Props = {
@@ -42,6 +43,13 @@
   let draggingId = $state<string | null>(null)
   let dragOverId = $state<string | null>(null)
   let dragPosition = $state<'above' | 'below' | null>(null)
+  // True while an item from a *different* list is being dragged (this panel is a drop target).
+  let incomingCrossDrag = $derived(
+    list?.status !== 'archived' &&
+      focusDrag.sourceListId !== null &&
+      focusDrag.sourceListId !== listId,
+  )
+  let crossDragOver = $state(false)
 
   // Edit state
   let editingId = $state<string | null>(null)
@@ -128,12 +136,16 @@
   function dragStart(id: string) {
     draggingId = id
     editingId = null
+    const item = localItems.find((i) => i.id === id)
+    if (item) focusDrag.start(item, listId)
   }
 
   function dragEnd() {
     draggingId = null
     dragOverId = null
     dragPosition = null
+    crossDragOver = false
+    focusDrag.clear()
   }
 
   function dragOver(id: string, position: 'above' | 'below') {
@@ -141,7 +153,41 @@
     dragPosition = position
   }
 
+  /**
+   * Moves the item carried by the shared drag store from its source list into
+   * this list. Insertion index is derived from the hovered item when present,
+   * otherwise the item is appended.
+   */
+  async function crossPanelDrop() {
+    const moved = focusDrag.item
+    const fromId = focusDrag.sourceListId
+    if (!list || !moved || !fromId || fromId === listId || list.status === 'archived') {
+      dragEnd()
+      return
+    }
+
+    let toIndex: number | undefined
+    if (dragOverId) {
+      const overIdx = localItems.findIndex((i) => i.id === dragOverId)
+      if (overIdx !== -1) toIndex = dragPosition === 'above' ? overIdx : overIdx + 1
+    }
+
+    dragEnd()
+    const res = await fetch('/api/focus/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromId, toId: listId, itemId: moved.id, toIndex }),
+    })
+    if (res.ok) await invalidateAll()
+  }
+
   async function drop() {
+    // Cross-panel move takes precedence: the dragged item came from another list.
+    if (focusDrag.sourceListId && focusDrag.sourceListId !== listId) {
+      await crossPanelDrop()
+      return
+    }
+
     if (!list || !draggingId || !dragOverId || draggingId === dragOverId) {
       dragEnd()
       return
@@ -209,7 +255,11 @@
   }
 </script>
 
-<div class="flex flex-col gap-3 rounded-lg bg-gray-800 p-4">
+<div
+  class="flex flex-col gap-3 rounded-lg bg-gray-800 p-4 transition-shadow {incomingCrossDrag && crossDragOver
+    ? 'ring-2 ring-blue-500/70'
+    : ''}"
+>
   <header class="flex items-center justify-between">
     <div>
       <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</span>
@@ -246,9 +296,26 @@
       </button>
     </div>
   {:else}
-    <ul class="space-y-0.5">
+    <ul
+      class="space-y-0.5 {incomingCrossDrag ? 'min-h-12 rounded' : ''}"
+      role="list"
+      ondragover={(e) => {
+        if (incomingCrossDrag) {
+          e.preventDefault()
+          crossDragOver = true
+        }
+      }}
+      ondrop={(e) => {
+        if (incomingCrossDrag) {
+          e.preventDefault()
+          drop()
+        }
+      }}
+    >
       {#if localItems.length === 0}
-        <li class="py-2 text-center text-xs text-gray-600">No items yet</li>
+        <li class="py-2 text-center text-xs text-gray-600">
+          {incomingCrossDrag ? 'Drop here' : 'No items yet'}
+        </li>
       {/if}
       {#each localItems as item (item.id)}
         <FocusItem

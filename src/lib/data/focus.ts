@@ -186,6 +186,70 @@ export function listFocusDailyInRange(days: number | 'all'): E.Effect<FocusDaily
 }
 
 /**
+ * Moves an item from one focus list to another atomically.
+ * The item is removed from the source list and inserted into the destination
+ * list, preserving its text, done/in_progress state and linked_ref. A fresh
+ * `item-N` id is assigned in the destination to avoid collisions with the
+ * destination's existing item ids.
+ * @param fromId - Source focus list identifier.
+ * @param toId - Destination focus list identifier.
+ * @param itemId - Identifier of the item to move within the source list.
+ * @param toIndex - Optional insertion index in the destination; appends when omitted.
+ * @returns Effect resolving to the updated source and destination lists, or failing with DataError.
+ */
+export function moveFocusItem(
+  fromId: string,
+  toId: string,
+  itemId: string,
+  toIndex?: number,
+): E.Effect<{ from: FocusList; to: FocusList }, DataError> {
+  if (fromId === toId) {
+    return E.fail(
+      new ParseError({ file: filePath(fromId), cause: "moveFocusItem: source and destination are the same list" }),
+    );
+  }
+  return E.flatMap(getFocusList(fromId), (fromEntity) => {
+    const moved = (fromEntity.data.items as FocusItem[]).find((i) => i.id === itemId);
+    if (!moved) {
+      return E.fail(
+        new ParseError({ file: filePath(fromId), cause: `moveFocusItem: item ${itemId} not found in ${fromId}` }),
+      );
+    }
+    return E.flatMap(getFocusList(toId), (toEntity) => {
+      const remaining = (fromEntity.data.items as FocusItem[]).filter((i) => i.id !== itemId);
+
+      const maxNum = (toEntity.data.items as FocusItem[]).reduce((max, item) => {
+        const n = parseInt(item.id.replace("item-", ""), 10);
+        return isNaN(n) ? max : Math.max(max, n);
+      }, 0);
+      const relocated: FocusItem = {
+        id: `item-${maxNum + 1}`,
+        text: moved.text,
+        done: moved.done,
+        ...(moved.in_progress ? { in_progress: moved.in_progress } : {}),
+        ...(moved.linked_ref ? { linked_ref: moved.linked_ref } : {}),
+      };
+
+      const destItems = [...(toEntity.data.items as FocusItem[])];
+      const insertAt =
+        toIndex === undefined || toIndex < 0 || toIndex > destItems.length
+          ? destItems.length
+          : toIndex;
+      destItems.splice(insertAt, 0, relocated);
+
+      return E.flatMap(
+        updateFocusList(fromId, { items: remaining } as Partial<FocusList>, fromEntity.body),
+        (from) =>
+          E.map(
+            updateFocusList(toId, { items: destItems } as Partial<FocusList>, toEntity.body),
+            (to) => ({ from: from as FocusList, to: to as FocusList }),
+          ),
+      );
+    });
+  });
+}
+
+/**
  * Adds a new item to a focus list.
  * @param id - Focus list identifier.
  * @param text - Display text for the new focus item.

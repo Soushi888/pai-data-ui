@@ -125,6 +125,7 @@
     ondragover={handleDragOver}
     ondrop={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onDrop?.();
     }}
 >
@@ -140,6 +141,10 @@
             draggable="true"
             ondragstart={(e) => {
                 e.stopPropagation();
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", item.id);
+                }
                 onDragStart?.(item.id);
             }}
             ondragend={(e) => {

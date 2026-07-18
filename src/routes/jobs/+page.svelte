@@ -147,7 +147,7 @@
       schedule: computedCron,
       output: outputs.length === 1 ? outputs[0] : outputs,
     }
-    if (job.type === 'claude') body.prompt = editPrompt.trim()
+    if (job.type === 'hermes') body.prompt = editPrompt.trim()
     if (job.type === 'script') body.command = editCommand.trim()
 
     const res = await fetch(`/api/jobs/${job.name}`, {
@@ -193,7 +193,7 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-xl font-semibold text-gray-100">Cron Jobs</h1>
-      <p class="text-xs text-gray-500 mt-0.5">Configured in <code class="text-gray-400">~/.claude/PAI/USER/DATA/jobs.toml</code></p>
+      <p class="text-xs text-gray-500 mt-0.5">Configured in <code class="text-gray-400">~/.hermes/USER/DATA/jobs.toml</code></p>
     </div>
     <button onclick={refresh} class="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded transition-colors">Refresh</button>
   </div>
@@ -328,7 +328,7 @@
             </div>
 
             <!-- Prompt / Command -->
-            {#if job.type === 'claude'}
+            {#if job.type === 'hermes'}
               <div>
                 <label class="block text-xs font-medium text-gray-400 mb-1.5">Prompt</label>
                 <textarea

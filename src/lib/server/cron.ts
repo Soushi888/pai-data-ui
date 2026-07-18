@@ -1,6 +1,6 @@
 /**
- * PAI Cron Engine — reads ~/.claude/PAI/USER/DATA/jobs.toml,
- * ticks every 60s, dispatches output to voice (PULSE port 8888) or log.
+ * Hermes Cron Engine — reads ~/.hermes/USER/DATA/jobs.toml,
+ * ticks every 60s, dispatches output to voice (notify endpoint) or log.
  * Runs inside the SvelteKit Node server process.
  */
 import { readFileSync, writeFileSync, watchFile, appendFileSync, mkdirSync } from 'node:fs'
@@ -8,18 +8,18 @@ import { join, dirname } from 'node:path'
 import { spawn } from 'node:child_process'
 import { parse } from 'smol-toml'
 
-const PAI_DIR = process.env.PAI_DIR ?? join(process.env.HOME ?? '~', '.claude')
-const JOBS_TOML = join(PAI_DIR, 'PAI/USER/DATA/jobs.toml')
-const LOG_FILE = join(PAI_DIR, 'PAI/PULSE/logs/cron.log')
+const HERMES_DIR = process.env.HERMES_DIR ?? process.env.PAI_DIR ?? join(process.env.HOME ?? '~', '.hermes')
+const JOBS_TOML = join(HERMES_DIR, 'USER/DATA/jobs.toml')
+const LOG_FILE = join(HERMES_DIR, 'USER/DATA/_cron/logs.log')
 const VOICE_URL = `http://localhost:${process.env.PORT ?? '4173'}/notify`
-const CLAUDE_BIN = process.env.CLAUDE_BIN ?? 'claude'
+const HERMES_BIN = process.env.HERMES_BIN ?? 'hermes'
 
 export type OutputTarget = 'voice' | 'log'
 
 export interface CronJob {
   name: string
   schedule: string
-  type: 'script' | 'claude'
+  type: 'script' | 'hermes'
   command?: string
   prompt?: string
   model?: string
@@ -48,16 +48,21 @@ function loadJobs(): void {
   try {
     const raw = readFileSync(JOBS_TOML, 'utf-8')
     const parsed = parse(raw) as { job?: Record<string, unknown>[] }
-    const loaded = (parsed.job ?? []).map((j) => ({
-      name: String(j.name),
-      schedule: String(j.schedule),
-      type: (j.type as 'script' | 'claude') ?? 'script',
-      command: j.command ? String(j.command) : undefined,
-      prompt: j.prompt ? String(j.prompt) : undefined,
-      model: j.model ? String(j.model) : 'sonnet',
-      output: (j.output ?? 'log') as OutputTarget | OutputTarget[],
-      enabled: Boolean(j.enabled ?? true),
-    }))
+    const loaded = (parsed.job ?? []).map((j) => {
+      // Normalise type: 'claude' becomes 'hermes' for backward compat with old jobs.toml
+      const rawType = String(j.type ?? 'script') as 'script' | 'claude' | 'hermes'
+      const type: 'script' | 'hermes' = rawType === 'claude' ? 'hermes' : rawType
+      return {
+        name: String(j.name),
+        schedule: String(j.schedule),
+        type,
+        command: j.command ? String(j.command) : undefined,
+        prompt: j.prompt ? String(j.prompt) : undefined,
+        model: j.model ? String(j.model) : 'sonnet',
+        output: (j.output ?? 'log') as OutputTarget | OutputTarget[],
+        enabled: Boolean(j.enabled ?? true),
+      }
+    })
     jobs = loaded
     clog(`Loaded ${jobs.length} job(s) from ${JOBS_TOML}`)
   } catch (err) {
@@ -121,8 +126,8 @@ async function runJob(job: CronJob): Promise<void> {
   const start = Date.now()
 
   try {
-    const output = job.type === 'claude'
-      ? await spawnClaude(job.prompt!, job.model ?? 'sonnet')
+    const output = job.type === 'hermes'
+      ? await spawnHermes(job.prompt!, job.model ?? 'sonnet')
       : await spawnScript(job.command!)
 
     const durationMs = Date.now() - start
@@ -159,22 +164,29 @@ function spawnScript(command: string, timeoutMs = 60_000): Promise<string> {
   })
 }
 
-function spawnClaude(prompt: string, model: string, timeoutMs = 300_000): Promise<string> {
+function spawnHermes(prompt: string, model: string, timeoutMs = 300_000): Promise<string> {
   return new Promise((resolve, reject) => {
     const env = { ...process.env }
-    delete env.ANTHROPIC_API_KEY
-    const proc = spawn(CLAUDE_BIN, ['--print', '--model', model, '--output-format', 'text'], {
+    // Remove any Hermes accept-hooks override to avoid interactive prompts in cron
+    delete env.HERMES_ACCEPT_HOOKS
+    const args = ['-z', prompt, '--model', model, '--accept-hooks']
+    const proc = spawn(HERMES_BIN, args, {
       env,
       stdio: ['pipe', 'pipe', 'pipe'],
     })
-    proc.stdin.write(prompt)
     proc.stdin.end()
     let out = ''
     proc.stdout.on('data', (d) => { out += d })
-    const timer = setTimeout(() => { proc.kill('SIGTERM'); reject(new Error('claude timeout')) }, timeoutMs)
+    let errOut = ''
+    proc.stderr.on('data', (d) => { errOut += d })
+    const timer = setTimeout(() => { proc.kill('SIGTERM'); reject(new Error('hermes timeout')) }, timeoutMs)
     proc.on('close', (code) => {
       clearTimeout(timer)
-      code === 0 ? resolve(out.trim()) : reject(new Error(`claude exit ${code}`))
+      if (code === 0) {
+        resolve(out.trim())
+      } else {
+        reject(new Error(`hermes exit ${code}: ${errOut.slice(0, 200)}`))
+      }
     })
   })
 }
@@ -259,7 +271,7 @@ export function updateJob(name: string, fields: JobUpdate): { ok: boolean; error
   if (fields.command !== undefined) job.command = fields.command
   if (fields.output !== undefined) job.output = fields.output
   try {
-    patchTomlBlock(name, fields)
+    patchTomlBlock(name, fields as Record<string, unknown>)
     return { ok: true }
   } catch (err) {
     return { ok: false, error: String(err) }

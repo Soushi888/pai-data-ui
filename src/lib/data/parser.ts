@@ -5,9 +5,9 @@ import matter from "gray-matter";
 import { FileNotFoundError, ParseError, WriteError } from "./errors.js";
 import type { EntityWithBody } from "./types.js";
 
-/** Root path to the PAI data directory. Defaults to ~/.claude/PAI/USER/DATA, overridable via PAI_DATA_ROOT env var. */
+/** Root path to the PAI data directory. Defaults to ~/.hermes/USER/DATA, overridable via PAI_DATA_ROOT env var. */
 export const DATA_ROOT =
-  process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.claude/PAI/USER/DATA`;
+  process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.hermes/USER/DATA`;
 
 type WriteHook = (filePath: string, data: Record<string, unknown>, body: string) => void
 let _writeHook: WriteHook | null = null

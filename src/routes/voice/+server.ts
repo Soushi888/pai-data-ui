@@ -3,8 +3,8 @@ import { existsSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { RequestHandler } from './$types'
 
-const PAI_DIR = process.env.PAI_DIR ?? join(process.env.HOME ?? '~', '.claude')
-const VOICE_MUTED_FILE = join(PAI_DIR, 'MEMORY/STATE/voice-muted')
+const HERMES_DIR = process.env.HERMES_DIR ?? process.env.PAI_DIR ?? join(process.env.HOME ?? '~', '.hermes')
+const VOICE_MUTED_FILE = join(HERMES_DIR, 'MEMORY/STATE/voice-muted')
 
 function isMuted() { return existsSync(VOICE_MUTED_FILE) }
 function mute() { writeFileSync(VOICE_MUTED_FILE, '') }

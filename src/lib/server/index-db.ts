@@ -2,9 +2,9 @@ import BetterSqlite3 from 'better-sqlite3'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-/** Root path to the PAI data directory. Defaults to ~/.claude/PAI/USER/DATA, overridable via PAI_DATA_ROOT env var. */
+/** Root path to the PAI data directory. Defaults to ~/.hermes/USER/DATA, overridable via PAI_DATA_ROOT env var. */
 export const DATA_ROOT =
-  process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.claude/PAI/USER/DATA`
+  process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.hermes/USER/DATA`
 
 const DB_PATH = join(DATA_ROOT, '_index', 'pai.db')
 

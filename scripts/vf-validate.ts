@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
-const DATA_ROOT = process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.claude/PAI/USER/DATA`
+const DATA_ROOT = process.env.PAI_DATA_ROOT ?? `${process.env.HOME}/.hermes/USER/DATA`
 
 const VALID_ACTIONS = new Set([
   'work',

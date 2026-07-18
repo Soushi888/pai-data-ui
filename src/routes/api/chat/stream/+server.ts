@@ -36,8 +36,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
   const fullPrompt = buildPrompt(prompt, context)
 
-  // Remove CLAUDECODE to avoid PAI nested session guard in Inference.ts
-  const { CLAUDECODE: _, ...safeEnv } = process.env as Record<string, string>
+  // Clean up env for subprocess (remove Hermes-specific vars to avoid conflicts)
+  const { HERMES_ACCEPT_HOOKS: _, ...safeEnv } = process.env as Record<string, string>
 
   const proc = spawn(
     'claude',

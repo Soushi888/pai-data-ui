@@ -8,8 +8,8 @@ import { join, dirname } from 'node:path'
 import { spawn } from 'node:child_process'
 import type { RequestHandler } from './$types'
 
-const PAI_DIR = process.env.PAI_DIR ?? join(process.env.HOME ?? '~', '.claude')
-const VOICE_MUTED_FILE = join(PAI_DIR, 'MEMORY/STATE/voice-muted')
+const HERMES_DIR = process.env.HERMES_DIR ?? process.env.PAI_DIR ?? join(process.env.HOME ?? '~', '.hermes')
+const VOICE_MUTED_FILE = join(HERMES_DIR, 'MEMORY/STATE/voice-muted')
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
 
 function isMuted(): boolean { return existsSync(VOICE_MUTED_FILE) }

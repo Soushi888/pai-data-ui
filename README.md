@@ -1,20 +1,20 @@
 # PAI Data UI
 
-Local SvelteKit web app for viewing and managing [PAI](https://github.com/danielmiessler/Personal_AI_Infrastructure) data. Reads and writes the same markdown files used by the PAI CLI skills — CRM, ERP, Projects, and Focus — so edits from the UI and the CLI are immediately in sync.
+Local SvelteKit web app for viewing and managing [PAI](https://github.com/danielmiessler/Personal_AI_Infrastructure) data. Reads and writes the same markdown files used by the Hermes data layer skills — CRM, ERP, Projects, and Focus — so edits from the UI and the Hermes CLI are immediately in sync.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.x
 - Node.js 18+ (adapter-node output runs under Node, not Bun)
-- A PAI installation at `~/.claude` with the data directory unlocked (git-crypt)
-- The PAI skills in `skills/` installed in `~/.claude/skills/`: CRM, ERP, Projects, DataLayer
+- A Hermes installation at `~/.hermes` with the data directory unlocked
+- The Hermes data layer skills installed: CRM, ERP, Projects, DataLayer, Focus
 
 ## Setup
 
 ```bash
 cd ~/Projets/pai-data-ui
 bun install
-cp .env.example .env   # set PAI_DATA_ROOT to your actual path
+cp .env.example .env   # set PAI_DATA_ROOT to ~/.hermes/USER/DATA
 bun run dev
 ```
 
@@ -24,13 +24,16 @@ Opens at **http://localhost:5173**
 
 | Variable | Default | Description |
 |---|---|---|
-| `PAI_DATA_ROOT` | `~/.claude/PAI/USER/DATA` | Absolute path to your PAI DATA directory |
+| `PAI_DATA_ROOT` | `~/.hermes/USER/DATA` | Absolute path to the PAI DATA directory |
+| `SKILLS_ROOT` | `~/.hermes/skills` | Absolute path to Hermes skills |
+| `HERMES_DIR` | `~/.hermes` | Absolute path to Hermes home directory |
+| `HERMES_BIN` | `hermes` | Path to the `hermes` CLI binary |
 | `PORT` | `4173` (prod) / `5173` (dev) | HTTP port |
 | `ORIGIN` | `http://localhost:$PORT` | Canonical origin for adapter-node CSRF protection |
 
-## CLI Skills
+## Hermes Data Layer Skills
 
-This UI is the web counterpart to four PAI CLI skills. Both read and write the same markdown files.
+This UI is the web counterpart to four Hermes data layer skills. Both read and write the same markdown files.
 
 ### CRM (`skills/CRM/`)
 
@@ -94,7 +97,7 @@ Data: `DATA/_index/pai.db` (SQLite FTS index, managed automatically)
 
 ## Data
 
-All data lives in `$PAI_DATA_ROOT` as markdown with YAML frontmatter. Markdown is the source of truth — the UI reads and writes files directly. A SQLite FTS index at `DATA/_index/pai.db` powers cross-entity search and is kept in sync by a chokidar file watcher that starts with the server.
+All data lives in `$PAI_DATA_ROOT` (defaults to `~/.hermes/USER/DATA`) as markdown with YAML frontmatter. Markdown is the source of truth — the UI reads and writes files directly. A SQLite FTS index at `DATA/_index/pai.db` powers cross-entity search and is kept in sync by a chokidar file watcher that starts with the server.
 
 ```
 DATA/

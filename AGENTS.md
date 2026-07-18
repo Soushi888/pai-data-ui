@@ -1,13 +1,13 @@
-# pai-data-ui — Claude Code Context
+# pai-data-ui — Hermes Agent Context
 
-SvelteKit web app that serves as the UI layer for PAI data. Reads and writes the same markdown files used by PAI CLI skills (CRM, ERP, Projects, Focus). Markdown is the source of truth — no separate database beyond the SQLite search index.
+SvelteKit web app that serves as the UI layer for PAI data. Reads and writes the same markdown files used by Hermes DataLayer skills (CRM, ERP, Projects, Focus). Markdown is the source of truth -- no separate database beyond the SQLite search index.
 
 ## Architecture
 
 ### Data Flow
 
 ```
-DATA_ROOT ($PAI_DATA_ROOT or ~/.claude/PAI/USER/DATA)
+DATA_ROOT ($PAI_DATA_ROOT or ~/.hermes/USER/DATA)
   └── *.md files (YAML frontmatter + markdown body)
         ↕  gray-matter read/write
   SyncEngine (chokidar watcher + SQLite FTS index)
@@ -26,8 +26,8 @@ DATA_ROOT ($PAI_DATA_ROOT or ~/.claude/PAI/USER/DATA)
 | `src/lib/data/types.ts` | All entity interfaces (Contact, Invoice, Task, FocusDaily, etc.) |
 | `src/lib/data/*.ts` | Domain-specific read/write functions (Effect-wrapped) |
 | `src/hooks.server.ts` | Starts `syncEngine` on server init |
-| `scripts/launcher.ts` | Compiled into `./pai-data-ui` binary — spawns Node to run build/ |
-| `scripts/tray.py` | Linux system tray (pystray + Pillow) — managed by systemd service |
+| `scripts/launcher.ts` | Compiled into `./pai-data-ui` binary -- spawns Node to run build/ |
+| `scripts/tray.py` | Linux system tray (pystray + Pillow) -- managed by systemd service |
 | `scripts/install.sh` | One-shot installer: builds binary, writes systemd service + .desktop file |
 
 ### Routes
@@ -37,6 +37,7 @@ DATA_ROOT ($PAI_DATA_ROOT or ~/.claude/PAI/USER/DATA)
 | `/crm` | Contacts, Opportunities, Organizations |
 | `/erp` | Invoices, Expenses, Income, Stats |
 | `/pm` | Projects, Tasks, Focus (daily/weekly lists) |
+| `/admin/cron` | Hermes cron job management |
 | `/tags/[tag]` | Cross-domain tag index |
 | `/search` | Global FTS across all entities |
 | `/api/*` | JSON REST endpoints (used by Svelte pages) |
@@ -66,7 +67,7 @@ Every entity file must have `id` (string) and `type` (string discriminant). Miss
 
 Located at `$DATA_ROOT/_index/pai.db`. The schema has:
 - `entities` table: `id, type, domain, file_path, data (JSON), body, updated, indexed_at`
-- `entities_fts` virtual table (FTS5): `name, tags, body` — full-text search
+- `entities_fts` virtual table (FTS5): `name, tags, body` -- full-text search
 - `sync_errors` table: files that failed to parse or are missing required fields
 
 The index is rebuilt on server start and kept live by the chokidar watcher. To force a manual rebuild: `bun rebuild-index`.
@@ -93,7 +94,7 @@ bun run dev          # dev server at http://localhost:5173
 bun run check        # svelte-check + TypeScript
 bun rebuild-index    # manually rebuild the SQLite FTS index
 bun run build        # production build to build/
-bun run build:binary # compile launcher → ./pai-data-ui binary
+bun run build:binary # compile launcher -> ./pai-data-ui binary
 ```
 
 ## Production Deployment
@@ -118,7 +119,10 @@ The systemd service starts `scripts/tray.py` (pystray system tray), which in tur
 
 | Variable | Default | Description |
 |---|---|---|
-| `PAI_DATA_ROOT` | `~/.claude/PAI/USER/DATA` | Absolute path to the PAI DATA directory |
+| `PAI_DATA_ROOT` | `~/.hermes/USER/DATA` | Absolute path to the PAI DATA directory |
+| `SKILLS_ROOT` | `~/.hermes/skills` | Absolute path to Hermes skills |
+| `HERMES_DIR` | `~/.hermes` | Absolute path to Hermes home directory |
+| `HERMES_BIN` | `hermes` | Path to the `hermes` CLI binary |
 | `PORT` | `4173` (prod) / `5173` (dev) | HTTP port |
 | `ORIGIN` | `http://localhost:$PORT` | Canonical origin for adapter-node CSRF protection |
 | `NODE_PATH` | `node` | Path to Node.js binary (set by systemd service) |
@@ -135,14 +139,20 @@ The systemd service starts `scripts/tray.py` (pystray system tray), which in tur
 - CodeMirror 6 (markdown + YAML editors)
 - D3 (charts in ERP stats page)
 - PDFKit (invoice PDF generation/export)
-- marked (markdown → HTML rendering)
+- marked (markdown -> HTML rendering)
 - Biome (formatting/linting)
 
-## CLI Skills
+## Hermes Skills
 
-The `skills/` directory contains PAI skill definitions to be symlinked or copied into `~/.claude/skills/`:
+The Hermes DataLayer skills live at `~/.hermes/skills/datalayer/`:
 
-- `skills/CRM/` — CRM skill
-- `skills/ERP/` — ERP skill (invoices, expenses, income)
-- `skills/Projects/` — Projects skill
-- `skills/DataLayer/` — DataLayer skill (domain scaffolding, schema management, index rebuild)
+| Skill | Description |
+|---|---|
+| `crm` | Contact, opportunity, and organization management |
+| `erp` | Invoice, expense, income, and payment management |
+| `projects` | Project and task management |
+| `focus` | Daily/weekly focus list management |
+| `datalayer` | Domain scaffolding, schema management, index rebuild |
+| `sales` | Sales package and narrative creation |
+
+The skills/ directory in the repo contains the source definitions for reference. The UI reads from the installed copies at `~/.hermes/skills/`.
